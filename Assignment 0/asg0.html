@@ -12,25 +12,49 @@
     <script src="asg0.js"></script>
     <script src="lib/cuon-matrix-cse160.js"></script>
 
-    <br><br>
-    <label for="name">V1</label>
+    <br>
+    <label for="v1_x">v1: x</label>
 
-    <input type="text" id="name" name="name" required minlength="4" maxlength="8" size="10">
+    <input type="number" step="0.01" id="v1_x" name="v1_x">
 
-    <br><br>
-    <label for="pet-select">Operation:</label>
+    <label for="v1_y">y</label>
 
-    <select name="pets" id="pet-select">
-      <option value="">--Please choose an option--</option>
-      <option value="dog">Dog</option>
-      <option value="cat">Cat</option>
-      <option value="hamster">Hamster</option>
-      <option value="parrot">Parrot</option>
-      <option value="spider">Spider</option>
-      <option value="goldfish">Goldfish</option>
+    <input type="number" step="0.01" id="v1_y" name="v1_y">
+
+    <br>
+
+    <label for="v2_x">v2: x</label>
+
+    <input type="number" step="0.01" id="v2_x" name="v2_x">
+
+    <label for="v2_y">y</label>
+
+    <input type="number" step="0.01" id="v2_y" name="v2_y">
+
+    <br>
+
+    <input type="button" value ="Draw" onclick="handleDrawEvent()"></input>
+
+    <br>
+    <br>
+
+    <label for="Options">Operation: </label>
+
+    <select name="options" id="options">
+      <option value="add">Add</option>
+      <option value="sub">Subtract</option>
+      <option value="mul">Multiply<ultiply</option>
+      <option value="div">Divide</option>
     </select>
+    
+    <label for="scalar">Scalar: </label>
 
-    <input type="button" value ="click"onclick="drawVector()"></input>
+    <input type="number" step="0.01" id="scalar" name="scalar">
+
+    <br>
+
+    <input type="button" value ="Draw1" onclick="handleDrawOperationEvent()"></input>
+
 
 
   </body>
