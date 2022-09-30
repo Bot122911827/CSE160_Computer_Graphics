@@ -15,8 +15,8 @@ function main() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);        // Fill a rectangle with the color
 
   //instantiate a vector v1
-  v1 = new Vector3(2.25, 2.25, 0);
-  console.log(v1.x);
+  let v1 = new Vector3([2.25, 2.25, 0]);
+  console.log(v1.elements[1]);
 
   drawVector(v1, "red");
 }
