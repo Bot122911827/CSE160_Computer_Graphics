@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Draw a blue rectangle (canvas version)</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="example" width="400" height="400">
+      Please use a browser that supports "canvas"
+    </canvas>
+    <script src="asg0.js"></script>
+    <script src="lib/cuon-matrix-cse160.js"></script>
+
+    <br><br>
+    <label for="name">V1</label>
+
+    <input type="text" id="name" name="name" required minlength="4" maxlength="8" size="10">
+
+    <br><br>
+    <label for="pet-select">Operation:</label>
+
+    <select name="pets" id="pet-select">
+      <option value="">--Please choose an option--</option>
+      <option value="dog">Dog</option>
+      <option value="cat">Cat</option>
+      <option value="hamster">Hamster</option>
+      <option value="parrot">Parrot</option>
+      <option value="spider">Spider</option>
+      <option value="goldfish">Goldfish</option>
+    </select>
+
+    <input type="button" value ="click"onclick="drawVector()"></input>
+
+
+  </body>
+
+</html>
