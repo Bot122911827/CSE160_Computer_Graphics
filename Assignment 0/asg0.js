@@ -56,7 +56,25 @@ function handleDrawEvent(){
 
 }
 
-//number 5
+//number 7
+function angleBetween(v1, v2){
+  let cos = Vector3.dot(v1, v2) / v1.magnitude() / v2.magnitude();
+
+  cos = Math.acos(cos)*180/Math.PI;
+
+  console.log('Angle: ', cos);
+
+}
+
+//number 8
+function areaTriangle(v1, v2){
+  let v3 = Vector3.cross(v1, v2);
+
+  console.log('Area of the triangle: ', v3.magnitude()/2);
+
+}
+
+//number 5, 6
 function handleDrawOperationEvent(){
 
   //1. Clear the canvas
@@ -103,8 +121,24 @@ function handleDrawOperationEvent(){
       drawVector(v_1, 'green');
       drawVector(v_2, 'green');
       break;
+    case 'mag':
+      let m1 = v_1.magnitude();
+      let m2 = v_2.magnitude();
+      console.log("Magnitude v1:", m1);
+      console.log("Magnitude v2:", m2);
+      break;
+    case 'nor':
+      v_1.normalize();
+      v_2.normalize();
+      drawVector(v_1, 'green');
+      drawVector(v_2, 'green');
+      break;
+    case 'angle':
+      angleBetween(v_1, v_2);
+      break;
+    case 'area':
+      areaTriangle(v_1, v_2);
+      break;
   }
   
 }
-
-//number 6
