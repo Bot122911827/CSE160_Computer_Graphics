@@ -11,7 +11,7 @@ var FSHADER_SOURCE =
   'void main() {\n' +
   '  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' + // Set the point color
   '}\n';
-
+-
 function main() {
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');

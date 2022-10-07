@@ -17,15 +17,26 @@
     <br>
 
     <h3>Drawing Mode:</h3>
-    <br>
 
     <button type="button" id="square">Squares</button>
     <button type="button" id="triangle">Triangles</button>
     <button type="button" id="circles">Circles</button>
 
+    <h3>Shape Color:</h3>
+
+    Red<input type="range" min="0" max="100" value="50" class="slider" id="Red">
+    Green<input type="range" min="0" max="100" value="50" class="slider" id="Green">
+    Blue<input type="range" min="0" max="100" value="50" class="slider" id="Blue">
+
+    <br>
+    Shape Size:<input type="range" min="5" max="40" value="20" class="slider" id="Size">
+    (Circles)Segment Count<input type="range" min="0" max="100" value="50" class="slider" id="Segment Count">
+
+
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
     <script src="lib/cuon-utils.js"></script>
+    <script src="Point.js"></script>
     <script src="ColoredPoints.js"></script>
   </body>
 </html>
