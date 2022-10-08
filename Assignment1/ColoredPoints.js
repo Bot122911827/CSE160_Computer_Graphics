@@ -136,7 +136,6 @@ function click(ev) {
   }
   
   point.position = [x, y];
-  console.log(point.position);
   point.color = g_selectedColor.slice();
   point.size = g_selectedSize
   g_shapesList.push(point);
