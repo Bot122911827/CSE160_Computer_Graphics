@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Change a point color</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <br><br>
+
+    <button type="button" id="clear">Clear Canvas</button>
+    <button type="button" id="draw">Draw Intergrated Picture</button>
+
+    <br>
+
+    <h3>Drawing Mode:</h3>
+
+    <button type="button" id="square">Squares</button>
+    <button type="button" id="triangle">Triangles</button>
+    <button type="button" id="circle">Circles</button>
+
+    <h3>Shape Color:</h3>
+
+    Red<input type="range" min="0" max="100" value="50" class="slider" id="Red">
+    Green<input type="range" min="0" max="100" value="50" class="slider" id="Green">
+    Blue<input type="range" min="0" max="100" value="50" class="slider" id="Blue">
+    Alpha<input type="range" min="10" max="100" value="100" class="slider" id="Alpha">
+
+    <br>
+    Shape Size:<input type="range" min="5" max="40" value="20" class="slider" id="Size">
+    (Circles)Segment Count<input type="range" min="10" max="100" value="50" class="slider" id="Segment Count">
+
+    <br><br>
+    <p>My Picture (A Tree):</p>
+
+    <img src="2.png" alt="Example">
+
+
+    <script src="lib/webgl-utils.js"></script>
+    <script src="lib/webgl-debug.js"></script>
+    <script src="lib/cuon-utils.js"></script>
+    <script src="ColoredPoints.js"></script>
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+  </body>
+</html>
