@@ -2,10 +2,10 @@
 // Vertex shader program
 var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +
-  'uniform float u_Size;\n' +
+  'uniform mat4 u_ModelMatrix;\n' +
+  'uniform mat4 u_GlobalRotateMatrix;\n' +
   'void main() {\n' +
-  '  gl_Position = a_Position;\n' +
-  '  gl_PointSize = u_Size;\n' +
+  '  gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;\n' +
   '}\n';
 
 // Fragment shader program
@@ -22,6 +22,8 @@ let gl;
 let a_Position;
 let u_FragColor;
 let u_Size;
+let u_ModelMatrix;
+let u_GlobalRotateMatrix;
 
 function setupWebGL(){
   // Retrieve <canvas> element
@@ -33,6 +35,8 @@ function setupWebGL(){
     console.log('Failed to get the rendering context for WebGL');
     return;
   }
+
+  gl.enable(gl.DEPTH_TEST);
 }
 
 function connectVariablesToGLSL(){
@@ -57,11 +61,21 @@ function connectVariablesToGLSL(){
   }
 
   // Get the storage location of Size
-  u_Size = gl.getUniformLocation(gl.program, 'u_Size');
-  if (!u_Size) {
-    console.log('Failed to get the storage location of u_Size');
+  u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+  if (!u_ModelMatrix) {
+    console.log('Failed to get the storage location of u_ModelMatrix');
     return;
   }
+
+  u_GlobalRotateMatrix = gl.getUniformLocation(gl.program, 'u_GlobalRotateMatrix');
+  if (!u_GlobalRotateMatrix) {
+    console.log('Failed to get the storage location of u_GlobalRotateMatrix');
+    return;
+  }
+
+  //set initial value
+  var identityM = new Matrix4();
+  gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
 }
 
 //Consts
@@ -74,12 +88,12 @@ let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let g_selectedSize = 10.0;
 let g_selectedSegment = 10.0;
 let g_selectedType = POINT;
+let g_globalAngle = 0;
 
 function addActionsForHtmlUI(){
 
   //clear
   document.getElementById('clear').onclick = function() {g_shapesList = []; renderAllShapes(); };
-  document.getElementById('draw').onclick = function() {drawAll()};
 
   //color
   document.getElementById('Red').addEventListener('mouseup', function() {g_selectedColor[0] = this.value/100;});
@@ -97,6 +111,9 @@ function addActionsForHtmlUI(){
 
   //segment
   document.getElementById('Segment Count').addEventListener('mouseup', function() {g_selectedSegment = this.value;});
+
+  //slider
+  document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = this.value; renderAllShapes();});
 
 }
 
@@ -116,7 +133,7 @@ function main() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   // Clear <canvas>
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  renderAllShapes();
 }
 
 var g_shapesList = [];
@@ -157,60 +174,38 @@ function convertCoordinatesEventToGL(ev){
 }
 
 function renderAllShapes(){
-  // Clear <canvas>
-  gl.clear(gl.COLOR_BUFFER_BIT);
 
-  var len = g_shapesList.length;
-  for(var i = 0; i < len; i++) {
-    g_shapesList[i].render();
-  }
-}
+  //pass u_ModelMatrix attribute
+  var globalRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
+  gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
-function drawAll(){
+  //clear canvas
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  let allPt = [
-    [-0.29498579502105715, 0.3249857950210571],
-    [-0.15498579502105714, 0.3749857950210571],
-    [-0.12498579502105713, 0.3249857950210571],
-    [-0.15998579502105714, 0.3299857950210571],
-    [-0.19998579502105712, 0.29498579502105715],
-    [-0.2649857950210571, 0.29498579502105715],
-    [-0.04498579502105713, 0.28498579502105714],
-    [-0.3699857950210571, 0.3299857950210571],
-    [-0.23498579502105713, 0.4999857950210571],
-    [-0.3249857950210571, 0.27498579502105713],
-    [-0.17498579502105713, 0.21498579502105714],
-    [-0.18998579502105714, 0.15998579502105714],
-    [-0.18998579502105714, 0.08498579502105713],
-    [-0.18498579502105714, 0.009985795021057129],
-    [-0.18498579502105714, -0.05001420497894287],
-    [-0.18498579502105714, -0.05501420497894287],
-    [-0.17498579502105713, -0.12501420497894286],
-    [-0.16998579502105712, -0.18501420497894286],
-    [-0.16998579502105712, -0.23501420497894288],
-    [-0.16998579502105712, -0.24001420497894288],
-    [-0.17498579502105713, -0.24001420497894288],
-    [-0.17498579502105713, -0.3100142049789429],
-    [-0.17498579502105713, -0.3100142049789429],
-    [-0.17498579502105713, -0.3600142049789429],
-    [-0.28998579502105715, 0.5049857950210571],
-    [-0.28998579502105715, 0.5099857950210571],
-    [-0.08998579502105714, 0.5199857950210571],
-    [-0.22998579502105712, 0.4399857950210571],
-    [-0.08998579502105714, 0.4449857950210571],
-    [-0.08998579502105714, 0.4449857950210571],
-    [-0.3149857950210571, 0.4349857950210571],
-    [-0.14998579502105713, -0.39501420497894285],
-    [-0.15998579502105714, -0.4300142049789429],
-    [-0.15998579502105714, -0.4350142049789429],
-    [-0.14998579502105713, -0.5100142049789429],
-    [-0.14998579502105713, -0.5750142049789428],
-    [-0.13998579502105712, -0.6300142049789429]
+  //draw the body cube
+  var body = new Cube();
+  body.color = [1.0,0.0,0.0,1.0];
+  body.matrix.translate(-.25, -.75, 0.0);
+  body.matrix.rotate(-5, 1, 0, 0);
+  body.matrix.scale(0.5, .3, .5);
+  body.render();
 
-  ];
+  //draw a left arm
+  var leftArm = new Cube();
+  leftArm.color = [1,1,0,1];
+  leftArm.matrix.setTranslate(0, -.5, 0.0);
+  leftArm.matrix.rotate(-5, 1,0,0);
+  leftArm.matrix.rotate(0, 0,0,1);
+  leftArm.matrix.scale(0.25, .7, .5);
+  leftArm.matrix.translate(-.5, 0,0);
+  leftArm.render();
 
-  for (var i = 0; i < allPt.length; i+=1){
-    drawTriangle( [allPt[i][0], allPt[i][1], allPt[i][0]+0.1, allPt[i][1], allPt[i][0], allPt[i][1]+0.1]);
-  }
-  
+  // Test Box
+  var box = new Cube();
+  box.color = [1,0,1,1];
+  box.matrix.translate(-.1, .1, 0, 0.0);
+  box.matrix.rotate(-30, 1,0,0);
+  box.matrix.scale(.2, .4, .2);
+  box.render();
+
 }
