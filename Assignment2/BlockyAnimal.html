@@ -10,29 +10,20 @@
     Please use a browser that supports "canvas"
     </canvas>
 
-    <br><br>
+    <p id="texts">XXX</p>
 
-    <button type="button" id="clear">Clear Canvas</button>
-
-    <br>
-
-    <h3>Drawing Mode:</h3>
-
-    <button type="button" id="square">Squares</button>
-    <button type="button" id="triangle">Triangles</button>
-    <button type="button" id="circle">Circles</button>
-
-    <h3>Shape Color:</h3>
-
-    Red<input type="range" min="0" max="100" value="50" class="slider" id="Red">
-    Green<input type="range" min="0" max="100" value="50" class="slider" id="Green">
-    Blue<input type="range" min="0" max="100" value="50" class="slider" id="Blue">
-    Alpha<input type="range" min="10" max="100" value="100" class="slider" id="Alpha">
+    
 
     <br>
-    Shape Size:<input type="range" min="5" max="40" value="20" class="slider" id="Size">
-    (Circles)Segment Count<input type="range" min="10" max="100" value="50" class="slider" id="Segment Count">
-    Camera Angle<input type="range" min="-180" max="180" value="5" class="slider" id="angleSlide">
+    Magenta Angle<input type="range" min="-180" max="180" value="5" class="slider" id="magentaAngle">
+    <button type="button" id="animationMagentaOnButton">ON</button>
+    <button type="button" id="animationMagentaOffButton">OFF</button>
+    <br>
+    Yellow Joint Angle<input type="range" min="-180" max="180" value="5" class="slider" id="yellow_angle_Slide">
+    <button type="button" id="animationYellowOnButton">ON</button>
+    <button type="button" id="animationYellowOffButton">OFF</button>
+    <br>
+    Camera Angle<input type="range" min="-45" max="45" value="0" class="slider" id="angleSlide">
 
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>

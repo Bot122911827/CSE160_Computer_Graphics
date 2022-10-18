@@ -89,31 +89,26 @@ let g_selectedSize = 10.0;
 let g_selectedSegment = 10.0;
 let g_selectedType = POINT;
 let g_globalAngle = 0;
+let g_yellowAngle = 0;
+let g_magentaAngle = 0;
+let g_yellowAnimation=false;
+let g_megantaAnimation=false;
 
 function addActionsForHtmlUI(){
 
-  //clear
-  document.getElementById('clear').onclick = function() {g_shapesList = []; renderAllShapes(); };
+  //buttons
+  document.getElementById("animationYellowOnButton").onclick = function() {g_yellowAnimation=true};
+  document.getElementById("animationYellowOffButton").onclick = function() {g_yellowAnimation=false};
 
-  //color
-  document.getElementById('Red').addEventListener('mouseup', function() {g_selectedColor[0] = this.value/100;});
-  document.getElementById('Green').addEventListener('mouseup', function() {g_selectedColor[1] = this.value/100;});
-  document.getElementById('Blue').addEventListener('mouseup', function() {g_selectedColor[2] = this.value/100;});
-  document.getElementById('Alpha').addEventListener('mouseup', function() {g_selectedColor[3] = this.value/100;});
-
-  //shape
-  document.getElementById('square').onclick = function() {g_selectedType = POINT;};
-  document.getElementById('triangle').onclick = function() {g_selectedType = TRIANGLE;};
-  document.getElementById('circle').onclick = function() {g_selectedType = CIRCLE;};
-
-  //size
-  document.getElementById('Size').addEventListener('mouseup', function() {g_selectedSize = this.value;});
-
-  //segment
-  document.getElementById('Segment Count').addEventListener('mouseup', function() {g_selectedSegment = this.value;});
+  document.getElementById("animationMagentaOnButton").onclick = function() {g_megantaAnimation=true};
+  document.getElementById("animationMagentaOffButton").onclick = function() {g_megantaAnimation=false};
 
   //slider
   document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = this.value; renderAllShapes();});
+
+  document.getElementById('yellow_angle_Slide').addEventListener('mousemove', function() {g_yellowAngle = this.value; renderAllShapes();});
+
+  document.getElementById('magentaAngle').addEventListener('mousemove', function() {g_magentaAngle = this.value; renderAllShapes();});
 
 }
 
@@ -133,7 +128,22 @@ function main() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   // Clear <canvas>
+  requestAnimationFrame(tick);
+}
+
+var g_startTime = performance.now()/1000;
+varg_seconds = performance.now()/1000-g_startTime;
+
+function tick(){
+
+  g_seconds  =performance.now()/1000-g_startTime;
+  //console.log(g_seconds);
+
+  updateAnimationAngles();
+
   renderAllShapes();
+
+  requestAnimationFrame(tick);
 }
 
 var g_shapesList = [];
@@ -173,14 +183,26 @@ function convertCoordinatesEventToGL(ev){
   return ([x, y]);
 }
 
+function updateAnimationAngles(){
+  if (g_yellowAnimation){
+    g_yellowAngle = (45*Math.sin(g_seconds));
+  }
+
+  if (g_megantaAnimation){
+    g_magentaAngle = (45*Math.sin(3*g_seconds));
+  }
+}
+
 function renderAllShapes(){
 
   //pass u_ModelMatrix attribute
+  var startTime = performance.now();
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
   //clear canvas
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
   //draw the body cube
   var body = new Cube();
@@ -191,21 +213,57 @@ function renderAllShapes(){
   body.render();
 
   //draw a left arm
-  var leftArm = new Cube();
-  leftArm.color = [1,1,0,1];
-  leftArm.matrix.setTranslate(0, -.5, 0.0);
-  leftArm.matrix.rotate(-5, 1,0,0);
-  leftArm.matrix.rotate(0, 0,0,1);
-  leftArm.matrix.scale(0.25, .7, .5);
-  leftArm.matrix.translate(-.5, 0,0);
-  leftArm.render();
+  var yellow = new Cube();
+  yellow.color = [1,1,0,1];
+  yellow.matrix.setTranslate(0, -.5, 0.0);
+  yellow.matrix.rotate(-5, 1,0,0);
+
+  yellow.matrix.rotate(-g_yellowAngle, 0,0,1);
+
+  /*if (g_yellowAnimation){
+    yellow.matrix.rotate(45*Math.sin(g_seconds), 0,0,1);
+  }else{
+    yellow.matrix.rotate(-g_yellowAngle, 0,0,1);
+  }*/
+  
+  var yellowCoordinatesMat = new Matrix4(yellow.matrix);
+  yellow.matrix.scale(0.25, .7, .5);
+  yellow.matrix.translate(-.5, 0,0);
+  yellow.render();
 
   // Test Box
   var box = new Cube();
   box.color = [1,0,1,1];
-  box.matrix.translate(-.1, .1, 0, 0.0);
+  box.matrix = yellowCoordinatesMat;
+  box.matrix.translate(0, .7, 0);
+  box.matrix.rotate(g_magentaAngle, 0,0,1);
+  box.matrix.scale(.3, .3, .3);
+  box.matrix.translate(-.5, 0, 0, -0.001);
+  /*box.matrix.translate(-.1, .1, 0, 0.0);
   box.matrix.rotate(-30, 1,0,0);
-  box.matrix.scale(.2, .4, .2);
+  box.matrix.scale(.2, .4, .2);*/
   box.render();
 
+  /*var K=100;
+  for (var i =1; i < K; i+=1){
+    var c = new Cube();
+    c.matrix.translate(-.8, 1.9*i/K-1, 0, 0);
+    c.matrix.rotate(g_seconds*100,1,1,1);
+    c.matrix.scale(.1, 0.5/K, 1.0/K);
+    c.render();
+  }*/
+
+  var duration = performance.now() - startTime;
+  sendTextToHTML( " ms: " + Math.floor(duration) + " fps " + Math.floor(1000/duration), "texts");
+
+}
+
+function sendTextToHTML(text, htmlID){
+  var htmlElm = document.getElementById(htmlID);
+  if (!htmlElm){
+    console.log("Failed to get" + htmlID + "from HTML");
+    return;
+  }
+
+  htmlElm.innerHTML = text;
 }
