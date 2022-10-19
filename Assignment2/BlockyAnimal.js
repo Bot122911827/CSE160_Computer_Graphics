@@ -91,8 +91,13 @@ let g_selectedType = POINT;
 let g_globalAngle = 0;
 let g_NeckAngle = -120;
 let g_HeadAngle = 110;
+let g_TailAngle = 45;
+let g_leg1Angle = 90;
+let g_leg2Angle = 0;
 let g_HeadAnimation=false;
 let g_NeckAnimation=false;
+let g_Leg1Animation=false;
+let g_Leg2Animation=false;
 
 function addActionsForHtmlUI(){
 
@@ -102,6 +107,10 @@ function addActionsForHtmlUI(){
 
   document.getElementById("animationHeadOnButton").onclick = function() {g_HeadAnimation=true};
   document.getElementById("animationHeadOffButton").onclick = function() {g_HeadAnimation=false};
+
+  //leg anime buttons
+  document.getElementById("animationLegOnButton").onclick = function() {g_Leg1Animation=true; g_Leg2Animation=true;};
+  document.getElementById("animationLegOffButton").onclick = function() {g_Leg1Animation=false; g_Leg2Animation=false;};
 
   //slider
   document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = -this.value; renderAllShapes();});
@@ -191,6 +200,16 @@ function updateAnimationAngles(){
   if (g_NeckAnimation){
     g_NeckAngle = (-120+4*Math.sin(5*g_seconds));
   }
+
+  if (g_Leg1Animation){
+    g_leg1Angle = (90+4*Math.sin(5*g_seconds));
+  }
+
+  if (g_Leg2Animation){
+    g_leg2Angle = (4*(Math.cos(5*g_seconds)));
+  }
+
+  g_TailAngle = (45+4*(Math.cos(5*g_seconds)));
 }
 
 function renderAllShapes(){
@@ -230,6 +249,92 @@ function renderAllShapes(){
   whiteHead.matrix.scale(0.4, 0.3, 0.5);
   whiteHead.matrix.rotate(-180, 1, 0, 0);
   whiteHead.render();
+
+  //draw purple tail
+  var tail = new Cube();
+  tail.color = [1.0,0.0,1.0,1.0];
+  tail.matrix.translate(-0.05 , -0.1, 0.4);
+  tail.matrix.rotate(g_TailAngle, 1, 0, 0);
+  tail.matrix.scale(0.1, .1, 0.5);
+  tail.render();
+
+  //legs
+
+  //leg1_________________________________________________
+  //draw leg1 right-front
+  var leg1 = new Cube();
+  leg1.color = [0.0,1.0,1.0,1.0];
+  leg1.matrix.translate(-0.27 , -0.2, -0.48);
+  leg1.matrix.rotate(g_leg1Angle, 1, 0, 0);
+  var leg1Base = new Matrix4(leg1.matrix);
+  leg1.matrix.scale(0.11, .2, 0.3);
+  leg1.render();
+
+  //draw leg1_b right-front
+  var leg1_b = new Cube();
+  leg1_b.matrix = leg1Base;
+  leg1_b.color = [0.0,1.0,0.0,1.0];
+  leg1_b.matrix.translate(0.01 , 0.05, 0.1);
+  leg1_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
+  leg1_b.matrix.scale(0.09, .1, 0.5);
+  leg1_b.render();
+
+  //leg2________________________________________________
+  //draw leg2 left-front
+  var leg2 = new Cube();
+  leg2.color = [0.0,1.0,1.0,1.0];
+  leg2.matrix.translate(0.16 , -0.2, -0.48);
+  leg2.matrix.rotate(g_leg1Angle, 1, 0, 0);
+  var leg2Base = new Matrix4(leg2.matrix);
+  leg2.matrix.scale(0.11, .2, 0.3);
+  leg2.render();
+
+  //draw leg2_b right-front
+  var leg2_b = new Cube();
+  leg2_b.matrix = leg2Base;
+  leg2_b.color = [0.0,1.0,0.0,1.0];
+  leg2_b.matrix.translate(0.01 , 0.05, 0.1);
+  leg2_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
+  leg2_b.matrix.scale(0.09, .1, 0.5);
+  leg2_b.render();
+
+  //leg3______________________________________________
+  //draw leg3 left-back
+  var leg3 = new Cube();
+  leg3.color = [0.0,1.0,1.0,1.0];
+  leg3.matrix.translate(-0.27 , -0.2, 0.29);
+  leg3.matrix.rotate(g_leg1Angle, 1, 0, 0);
+  var leg3Base = new Matrix4(leg3.matrix);
+  leg3.matrix.scale(0.11, .2, 0.3);
+  leg3.render();
+
+  //draw leg3_b right-front
+  var leg3_b = new Cube();
+  leg3_b.matrix = leg3Base;
+  leg3_b.color = [0.0,1.0,0.0,1.0];
+  leg3_b.matrix.translate(0.01 , 0.05, 0.1);
+  leg3_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
+  leg3_b.matrix.scale(0.09, .1, 0.5);
+  leg3_b.render();
+
+  //leg4______________________________________________
+  //draw leg4 left-back
+  var leg4 = new Cube();
+  leg4.color = [0.0,1.0,1.0,1.0];
+  leg4.matrix.translate(0.16 , -0.2, 0.29);
+  leg4.matrix.rotate(g_leg1Angle, 1, 0, 0);
+  var leg4Base = new Matrix4(leg4.matrix);
+  leg4.matrix.scale(0.11, .2, 0.3);
+  leg4.render();
+
+  //draw leg4_b right-front
+  var leg4_b = new Cube();
+  leg4_b.matrix = leg4Base;
+  leg4_b.color = [0.0,1.0,0.0,1.0];
+  leg4_b.matrix.translate(0.01 , 0.05, 0.1);
+  leg4_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
+  leg4_b.matrix.scale(0.09, .1, 0.5);
+  leg4_b.render();
 
   var duration = performance.now() - startTime;
   sendTextToHTML( " ms: " + Math.floor(duration) + " fps " + Math.floor(1000/duration), "texts");
