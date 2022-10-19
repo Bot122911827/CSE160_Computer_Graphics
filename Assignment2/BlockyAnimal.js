@@ -89,26 +89,25 @@ let g_selectedSize = 10.0;
 let g_selectedSegment = 10.0;
 let g_selectedType = POINT;
 let g_globalAngle = 0;
-let g_yellowAngle = 0;
-let g_magentaAngle = 0;
-let g_yellowAnimation=false;
-let g_megantaAnimation=false;
+let g_NeckAngle = -120;
+let g_HeadAngle = 110;
+let g_HeadAnimation=false;
+let g_NeckAnimation=false;
 
 function addActionsForHtmlUI(){
 
   //buttons
-  document.getElementById("animationYellowOnButton").onclick = function() {g_yellowAnimation=true};
-  document.getElementById("animationYellowOffButton").onclick = function() {g_yellowAnimation=false};
+  document.getElementById("animationNeckOnButton").onclick = function() {g_NeckAnimation=true};
+  document.getElementById("animationNeckOffButton").onclick = function() {g_NeckAnimation=false};
 
-  document.getElementById("animationMagentaOnButton").onclick = function() {g_megantaAnimation=true};
-  document.getElementById("animationMagentaOffButton").onclick = function() {g_megantaAnimation=false};
+  document.getElementById("animationHeadOnButton").onclick = function() {g_HeadAnimation=true};
+  document.getElementById("animationHeadOffButton").onclick = function() {g_HeadAnimation=false};
 
   //slider
-  document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = this.value; renderAllShapes();});
+  document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = -this.value; renderAllShapes();});
 
-  document.getElementById('yellow_angle_Slide').addEventListener('mousemove', function() {g_yellowAngle = this.value; renderAllShapes();});
-
-  document.getElementById('magentaAngle').addEventListener('mousemove', function() {g_magentaAngle = this.value; renderAllShapes();});
+  document.getElementById('NeckAngle').addEventListener('mousemove', function() {g_NeckAngle = this.value; renderAllShapes();});
+  document.getElementById('HeadAngle').addEventListener('mousemove', function() {g_HeadAngle = this.value; renderAllShapes();});
 
 }
 
@@ -184,12 +183,13 @@ function convertCoordinatesEventToGL(ev){
 }
 
 function updateAnimationAngles(){
-  if (g_yellowAnimation){
-    g_yellowAngle = (45*Math.sin(g_seconds));
+  if (g_HeadAnimation){
+    //console.log(Math.sin(g_seconds));
+    g_HeadAngle = (110+4*Math.sin(5*g_seconds));
   }
 
-  if (g_megantaAnimation){
-    g_magentaAngle = (45*Math.sin(3*g_seconds));
+  if (g_NeckAnimation){
+    g_NeckAngle = (-120+4*Math.sin(5*g_seconds));
   }
 }
 
@@ -204,54 +204,32 @@ function renderAllShapes(){
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  //draw the body cube
+  //draw red body
   var body = new Cube();
   body.color = [1.0,0.0,0.0,1.0];
-  body.matrix.translate(-.25, -.75, 0.0);
-  body.matrix.rotate(-5, 1, 0, 0);
-  body.matrix.scale(0.5, .3, .5);
+  body.matrix.translate(-0.3, -0.3, -0.5);
+  body.matrix.rotate(0, 1, 0, 0);
+  body.matrix.scale(0.6, .3, 1);
   body.render();
 
-  //draw a left arm
-  var yellow = new Cube();
-  yellow.color = [1,1,0,1];
-  yellow.matrix.setTranslate(0, -.5, 0.0);
-  yellow.matrix.rotate(-5, 1,0,0);
+  //draw yellow neck
+  var yellowNeck = new Cube();
+  yellowNeck.color = [1, 1, 0, 1];
+  yellowNeck.matrix.translate(-0.16, 0, -0.2);
+  yellowNeck.matrix.rotate(g_NeckAngle, 1, 0, 0);
+  var BlackBase = new Matrix4(yellowNeck.matrix);
+  yellowNeck.matrix.scale(0.3, .3, .5);
+  yellowNeck.render();
 
-  yellow.matrix.rotate(-g_yellowAngle, 0,0,1);
-
-  /*if (g_yellowAnimation){
-    yellow.matrix.rotate(45*Math.sin(g_seconds), 0,0,1);
-  }else{
-    yellow.matrix.rotate(-g_yellowAngle, 0,0,1);
-  }*/
-  
-  var yellowCoordinatesMat = new Matrix4(yellow.matrix);
-  yellow.matrix.scale(0.25, .7, .5);
-  yellow.matrix.translate(-.5, 0,0);
-  yellow.render();
-
-  // Test Box
-  var box = new Cube();
-  box.color = [1,0,1,1];
-  box.matrix = yellowCoordinatesMat;
-  box.matrix.translate(0, .7, 0);
-  box.matrix.rotate(g_magentaAngle, 0,0,1);
-  box.matrix.scale(.3, .3, .3);
-  box.matrix.translate(-.5, 0, 0, -0.001);
-  /*box.matrix.translate(-.1, .1, 0, 0.0);
-  box.matrix.rotate(-30, 1,0,0);
-  box.matrix.scale(.2, .4, .2);*/
-  box.render();
-
-  /*var K=100;
-  for (var i =1; i < K; i+=1){
-    var c = new Cube();
-    c.matrix.translate(-.8, 1.9*i/K-1, 0, 0);
-    c.matrix.rotate(g_seconds*100,1,1,1);
-    c.matrix.scale(.1, 0.5/K, 1.0/K);
-    c.render();
-  }*/
+  //draw White head
+  var whiteHead = new Cube();
+  whiteHead.matrix = BlackBase;
+  whiteHead.color = [1, 1, 1, 1];
+  whiteHead.matrix.translate(-0.05, 0, 0.5);
+  whiteHead.matrix.rotate(g_HeadAngle, 1, 0, 0);
+  whiteHead.matrix.scale(0.4, 0.3, 0.5);
+  whiteHead.matrix.rotate(-180, 1, 0, 0);
+  whiteHead.render();
 
   var duration = performance.now() - startTime;
   sendTextToHTML( " ms: " + Math.floor(duration) + " fps " + Math.floor(1000/duration), "texts");

@@ -6,7 +6,7 @@
   </head>
 
   <body onload="main()">
-    <canvas id="webgl" width="400" height="400">
+    <canvas id="webgl" width="1000" height="1000">
     Please use a browser that supports "canvas"
     </canvas>
 
@@ -15,15 +15,15 @@
     
 
     <br>
-    Magenta Angle<input type="range" min="-180" max="180" value="5" class="slider" id="magentaAngle">
-    <button type="button" id="animationMagentaOnButton">ON</button>
-    <button type="button" id="animationMagentaOffButton">OFF</button>
+    Neck Angle<input type="range" min="-150" max="-90" value="-120" class="slider" id="NeckAngle">
+    <button type="button" id="animationNeckOnButton">ON</button>
+    <button type="button" id="animationNeckOffButton">OFF</button>
     <br>
-    Yellow Joint Angle<input type="range" min="-180" max="180" value="5" class="slider" id="yellow_angle_Slide">
-    <button type="button" id="animationYellowOnButton">ON</button>
-    <button type="button" id="animationYellowOffButton">OFF</button>
+    Head Angle<input type="range" min="95" max="130" value="110" class="slider" id="HeadAngle">
+    <button type="button" id="animationHeadOnButton">ON</button>
+    <button type="button" id="animationHeadOffButton">OFF</button>
     <br>
-    Camera Angle<input type="range" min="-45" max="45" value="0" class="slider" id="angleSlide">
+    Camera Angle<input type="range" min="-180" max="180" value="0" class="slider" id="angleSlide">
 
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
