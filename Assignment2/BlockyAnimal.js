@@ -89,11 +89,14 @@ let g_selectedSize = 10.0;
 let g_selectedSegment = 10.0;
 let g_selectedType = POINT;
 let g_globalAngle = 0;
+let g_globalAngle_Y = 0;
 let g_NeckAngle = -120;
 let g_HeadAngle = 110;
 let g_TailAngle = 45;
 let g_leg1Angle = 90;
 let g_leg2Angle = 0;
+let g_leg1_1Angle = 90;
+let g_leg2_1Angle = 0;
 let g_HeadAnimation=false;
 let g_NeckAnimation=false;
 let g_Leg1Animation=false;
@@ -113,10 +116,13 @@ function addActionsForHtmlUI(){
   document.getElementById("animationLegOffButton").onclick = function() {g_Leg1Animation=false; g_Leg2Animation=false;};
 
   //slider
-  document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = -this.value; renderAllShapes();});
+  document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = -this.value; renderScene();});
 
-  document.getElementById('NeckAngle').addEventListener('mousemove', function() {g_NeckAngle = this.value; renderAllShapes();});
-  document.getElementById('HeadAngle').addEventListener('mousemove', function() {g_HeadAngle = this.value; renderAllShapes();});
+  document.getElementById('NeckAngle').addEventListener('mousemove', function() {g_NeckAngle = this.value; renderScene();});
+  document.getElementById('HeadAngle').addEventListener('mousemove', function() {g_HeadAngle = this.value; renderScene();});
+
+  //shift
+  document.addEventListener('click', logKey);
 
 }
 
@@ -135,6 +141,10 @@ function main() {
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
+  //mouse move
+  var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
+  initEventHandlers(canvas, currentAngle);
+
   // Clear <canvas>
   requestAnimationFrame(tick);
 }
@@ -142,14 +152,24 @@ function main() {
 var g_startTime = performance.now()/1000;
 varg_seconds = performance.now()/1000-g_startTime;
 
+function logKey(e) {
+  console.log(e.shiftKey);
+
+  updateAnimationAngles(10);
+
+  renderScene();
+
+  requestAnimationFrame(tick);
+}
+
 function tick(){
 
   g_seconds  =performance.now()/1000-g_startTime;
   //console.log(g_seconds);
 
-  updateAnimationAngles();
+  updateAnimationAngles(5);
 
-  renderAllShapes();
+  renderScene();
 
   requestAnimationFrame(tick);
 }
@@ -176,7 +196,7 @@ function click(ev) {
   g_shapesList.push(point);
   
   //Draw every shape that is supposed to be in the canvas
-  renderAllShapes();
+  renderScene();
 
 }
 
@@ -191,37 +211,86 @@ function convertCoordinatesEventToGL(ev){
   return ([x, y]);
 }
 
-function updateAnimationAngles(){
+
+
+function updateAnimationAngles(speed){
   if (g_HeadAnimation){
     //console.log(Math.sin(g_seconds));
-    g_HeadAngle = (110+4*Math.sin(5*g_seconds));
+    g_HeadAngle = (110+4*Math.sin(speed*g_seconds));
   }
 
   if (g_NeckAnimation){
-    g_NeckAngle = (-120+4*Math.sin(5*g_seconds));
+    g_NeckAngle = (-120+4*Math.sin(speed*g_seconds));
   }
 
   if (g_Leg1Animation){
-    g_leg1Angle = (90+4*Math.sin(5*g_seconds));
+    g_leg1Angle = (90+10*Math.sin(speed*g_seconds));
+    g_leg1_1Angle = (90+10*Math.cos(speed*g_seconds+3));
   }
 
   if (g_Leg2Animation){
-    g_leg2Angle = (4*(Math.cos(5*g_seconds)));
+    g_leg2Angle = (10*(Math.cos(speed*g_seconds)));
+    g_leg2_1Angle = (10*(Math.sin(speed*g_seconds+3)));
   }
 
-  g_TailAngle = (45+4*(Math.cos(5*g_seconds)));
+  g_TailAngle = (45+4*(Math.cos(speed*g_seconds)));
 }
 
-function renderAllShapes(){
+
+function initEventHandlers(canvas, currentAngle) {
+  var dragging = false;         // Dragging or not
+  var lastX = -1, lastY = -1;   // Last position of the mouse
+
+  canvas.onmousedown = function(ev) {   // Mouse is pressed
+    var x = ev.clientX, y = ev.clientY;
+    // Start dragging if a moue is in <canvas>
+    var rect = ev.target.getBoundingClientRect();
+    if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
+      lastX = x; lastY = y;
+      dragging = true;
+    }
+
+  };
+
+  canvas.onmouseup = function(ev) { dragging = false;  }; // Mouse is released
+
+  canvas.onmousemove = function(ev) { // Mouse is moved
+    var x = ev.clientX, y = ev.clientY;
+    if (dragging) {
+      var factor = 100/canvas.height; // The rotation ratio
+      var dx = factor * (x - lastX);
+      var dy = factor * (y - lastY);
+      // Limit x-axis rotation angle to -90 to 90 degrees
+      currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
+      currentAngle[1] = currentAngle[1] + dx;
+      g_globalAngle = -x;
+      g_globalAngle_Y = -y;
+    }
+    lastX = x, lastY = y;
+    
+  };
+}
+
+function renderScene(){
 
   //pass u_ModelMatrix attribute
   var startTime = performance.now();
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
+  globalRotMat.rotate(g_globalAngle_Y,1,0,0);
+
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
   //clear canvas
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  //test
+  var test = new Cylinder();
+  test.color = [1.0,0.0,1.0,1.0];
+  test.matrix.translate(0.0 , -0.1, 0.4);
+  test.matrix.rotate(g_TailAngle, 1, 0, 0);
+  test.matrix.scale(1, 1, 0.5);
+  test.render();
 
   //draw red body
   var body = new Cube();
@@ -250,14 +319,6 @@ function renderAllShapes(){
   whiteHead.matrix.rotate(-180, 1, 0, 0);
   whiteHead.render();
 
-  //draw purple tail
-  var tail = new Cube();
-  tail.color = [1.0,0.0,1.0,1.0];
-  tail.matrix.translate(-0.05 , -0.1, 0.4);
-  tail.matrix.rotate(g_TailAngle, 1, 0, 0);
-  tail.matrix.scale(0.1, .1, 0.5);
-  tail.render();
-
   //legs
 
   //leg1_________________________________________________
@@ -265,7 +326,7 @@ function renderAllShapes(){
   var leg1 = new Cube();
   leg1.color = [0.0,1.0,1.0,1.0];
   leg1.matrix.translate(-0.27 , -0.2, -0.48);
-  leg1.matrix.rotate(g_leg1Angle, 1, 0, 0);
+  leg1.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
   var leg1Base = new Matrix4(leg1.matrix);
   leg1.matrix.scale(0.11, .2, 0.3);
   leg1.render();
@@ -275,7 +336,7 @@ function renderAllShapes(){
   leg1_b.matrix = leg1Base;
   leg1_b.color = [0.0,1.0,0.0,1.0];
   leg1_b.matrix.translate(0.01 , 0.05, 0.1);
-  leg1_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
+  leg1_b.matrix.rotate(g_leg2_1Angle, 1, 0, 0);
   leg1_b.matrix.scale(0.09, .1, 0.5);
   leg1_b.render();
 
@@ -303,7 +364,7 @@ function renderAllShapes(){
   var leg3 = new Cube();
   leg3.color = [0.0,1.0,1.0,1.0];
   leg3.matrix.translate(-0.27 , -0.2, 0.29);
-  leg3.matrix.rotate(g_leg1Angle, 1, 0, 0);
+  leg3.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
   var leg3Base = new Matrix4(leg3.matrix);
   leg3.matrix.scale(0.11, .2, 0.3);
   leg3.render();
@@ -313,7 +374,7 @@ function renderAllShapes(){
   leg3_b.matrix = leg3Base;
   leg3_b.color = [0.0,1.0,0.0,1.0];
   leg3_b.matrix.translate(0.01 , 0.05, 0.1);
-  leg3_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
+  leg3_b.matrix.rotate(g_leg2_1Angle, 1, 0, 0);
   leg3_b.matrix.scale(0.09, .1, 0.5);
   leg3_b.render();
 
