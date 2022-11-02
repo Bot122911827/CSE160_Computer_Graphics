@@ -155,11 +155,7 @@ varg_seconds = performance.now()/1000-g_startTime;
 function logKey(e) {
   console.log(e.shiftKey);
 
-  updateAnimationAngles(10);
-
-  renderScene();
-
-  requestAnimationFrame(tick);
+  g_TailAngle = (90+4*(Math.cos(5*g_seconds)));
 }
 
 function tick(){
@@ -318,6 +314,16 @@ function renderScene(){
   whiteHead.matrix.scale(0.4, 0.3, 0.5);
   whiteHead.matrix.rotate(-180, 1, 0, 0);
   whiteHead.render();
+
+  //draw nose
+  var nose = new Cube();
+  nose.matrix = BlackBase;
+  nose.color = [1, 0, 0, 1];
+  nose.matrix.translate(0.31, 0, 1);
+  nose.matrix.rotate(g_HeadAngle, 1, 0, 0);
+  nose.matrix.scale(0.4, 0.3, 0.5);
+  nose.matrix.rotate(-180, 1, 0, 0);
+  nose.render();
 
   //legs
 
