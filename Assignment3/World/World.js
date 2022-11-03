@@ -229,14 +229,16 @@ function main() {
   // Register function (event handler) to be called on a mouse press
   //canvas.onmousedown = click;
   //canvas.onmousemove = function(ev) { if (ev.buttons == 1) {click(ev)}};
+  document.onkeydown = keydown;
+
   initTextures();
 
   // Specify the color for clearing <canvas>
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);  
 
   //mouse move
-  var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
-  initEventHandlers(canvas, currentAngle);
+  //var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
+  //initEventHandlers(canvas, currentAngle);
 
   // Clear <canvas>
   requestAnimationFrame(tick);
@@ -300,8 +302,6 @@ function convertCoordinatesEventToGL(ev){
   return ([x, y]);
 }
 
-
-
 function updateAnimationAngles(speed){
   if (g_HeadAnimation){
     //console.log(Math.sin(g_seconds));
@@ -325,40 +325,38 @@ function updateAnimationAngles(speed){
   g_TailAngle = (45+4*(Math.cos(speed*g_seconds)));
 }
 
+function keydown(ev){
+  if (ev.keyCode == 68){ //right
+    g_eye[0] += 0.2;
+  } else
+  if (ev.keyCode == 65){ //left
+    g_eye[0] -=0.2;
+  }
 
-function initEventHandlers(canvas, currentAngle) {
-  var dragging = false;         // Dragging or not
-  var lastX = -1, lastY = -1;   // Last position of the mouse
+  if (ev.keyCode == 83){ //back
+    g_eye[2] += 0.2;
+  } else
+  if (ev.keyCode == 87){ //front
+    g_eye[2] -=0.2;
+  }
 
-  canvas.onmousedown = function(ev) {   // Mouse is pressed
-    var x = ev.clientX, y = ev.clientY;
-    // Start dragging if a moue is in <canvas>
-    var rect = ev.target.getBoundingClientRect();
-    if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
-      lastX = x; lastY = y;
-      dragging = true;
-    }
+  if (ev.keyCode == 32){ //up
+    g_eye[1] += 0.2;
+  } else
+  if (ev.keyCode == 17){ //down
+    g_eye[1] -=0.2;
+  }
 
-  };
-
-  canvas.onmouseup = function(ev) { dragging = false;  }; // Mouse is released
-
-  canvas.onmousemove = function(ev) { // Mouse is moved
-    var x = ev.clientX, y = ev.clientY;
-    if (dragging) {
-      var factor = 100/canvas.height; // The rotation ratio
-      var dx = factor * (x - lastX);
-      var dy = factor * (y - lastY);
-      // Limit x-axis rotation angle to -90 to 90 degrees
-      currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
-      currentAngle[1] = currentAngle[1] + dx;
-      g_globalAngle = -x;
-      g_globalAngle_Y = -y;
-    }
-    lastX = x, lastY = y;
-    
-  };
+  renderScene();
+  console.log(ev.keyCode);
 }
+
+
+//var g_eye = [0,0,3];
+//var g_at = [0,0,-100];
+//var g_up = [0,1,0];
+
+var g_camera = new Camera();
 
 function renderScene(){
 
@@ -366,12 +364,17 @@ function renderScene(){
   var startTime = performance.now();
 
   var projMat = new Matrix4();
+  projMat.setPerspective(60, canvas.width/canvas.height, .1, 100);//perspective
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
 
   var viewMat = new Matrix4();
+  viewMat.setLookAt(
+        g_camera.eye.x, g_camera.eye.y, g_camera.eye.z,
+        g_camera.at.x, g_camera.at.y, g_camera.at.z,
+        g_camera.up.x, g_camera.up.y, g_camera.up.z,);//look at (eye, at, up)
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
 
-  var globalRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
+  var globalRotMat = new Matrix4().rotate(g_globalAngle,0,-1,0);
   globalRotMat.rotate(g_globalAngle_Y,1,0,0);
 
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
@@ -379,6 +382,21 @@ function renderScene(){
   //clear canvas
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  //floor
+  var floor = new Cube();
+  floor.color = [1.0,0.0,0.0,1.0];
+  floor.matrix.translate(0, -.75, 0.0);
+  floor.matrix.scale(10, 0, 10);
+  floor.matrix.translate(-.5, 0, -.5);
+  floor.render();
+
+  //sky
+  var sky = new Cube();
+  sky.color = [1.0,0.0,0.0,1.0];
+  sky.matrix.scale(50, 50, 50);
+  sky.matrix.translate(-.5, -.5, -.5);
+  sky.render();
 
   //test
   var test = new Cylinder();
