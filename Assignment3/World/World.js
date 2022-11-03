@@ -20,10 +20,17 @@ var FSHADER_SOURCE =
   'varying vec2 v_UV;\n' + 
   'uniform vec4 u_FragColor;\n' + 
   'uniform sampler2D u_Sampler0;\n' + 
+  'uniform int u_whichTexture;\n' + 
   'void main() {\n' +
-  '  gl_FragColor = u_FragColor;\n' +
-  '  gl_FragColor = vec4(v_UV, 1.0, 1.0);\n' +
-  '  gl_FragColor = texture2D(u_Sampler0, v_UV);\n' +
+  '   if (u_whichTexture == -2){\n' + 
+  '     gl_FragColor = u_FragColor;\n' + 
+  '   } else if (u_whichTexture == -1){\n' + 
+  '     gl_FragColor = vec4(v_UV, 1.0, 1.0);\n' + 
+  '   } else if (u_whichTexture == 0){\n' + 
+  '     gl_FragColor = texture2D(u_Sampler0, v_UV);\n' + 
+  '   } else {\n' + 
+  '    gl_FragColor = vec4(1, .2, .2, 1);\n' + 
+  '   }\n' + 
   '}\n';
 
 //Global Variables
@@ -38,6 +45,7 @@ let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_GlobalRotateMatrix;
 let u_Sampler0;
+let u_whichTexture;
 
 
 function setupWebGL(){
@@ -106,6 +114,13 @@ function connectVariablesToGLSL(){
     return;
   }
 
+  // Get the storage location of u_Sampler
+  var u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
+  if (!u_Sampler0) {
+    console.log('Failed to get the storage location of u_Sampler0');
+    return false;
+  }
+
   //set initial value
   var identityM = new Matrix4();
   gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
@@ -159,33 +174,29 @@ function addActionsForHtmlUI(){
 
 }
 
-function initTextures(gl, n) {
-  var texture = gl.createTexture();   // Create a texture object
-  if (!texture) {
-    console.log('Failed to create the texture object');
-    return false;
-  }
+function initTextures() {
 
-  // Get the storage location of u_Sampler
-  var u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
-  if (!u_Sampler0) {
-    console.log('Failed to get the storage location of u_Sampler0');
-    return false;
-  }
-  var image = new Image();  // Create the image object
+  var image = new Image();  // Create the image object 
   if (!image) {
     console.log('Failed to create the image object');
     return false;
   }
   // Register the event handler to be called on loading an image
-  image.onload = function(){ loadTexture(gl, n, texture, u_Sampler0, image); };
+  image.onload = function(){ sendTextureToTEXTURE0(image); };
+   
   // Tell the browser to load an image
   image.src = '../resources/sky.jpg';
 
-  return true;
+   return true;
 }
 
-function loadTexture(gl, n, texture, u_Sampler, image) {
+function sendTextureToTEXTURE0(image) {
+
+  var texture = gl.createTexture();   // Create a texture object
+  if (!texture) {
+    console.log('Failed to create the texture object');
+    return false;
+  }
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
   // Enable texture unit0
   gl.activeTexture(gl.TEXTURE0);
@@ -198,7 +209,7 @@ function loadTexture(gl, n, texture, u_Sampler, image) {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
   
   // Set the texture unit 0 to the sampler
-  gl.uniform1i(u_Sampler, 0);
+  gl.uniform1i(u_Sampler0, 0);
   
   //gl.clear(gl.COLOR_BUFFER_BIT);   // Clear <canvas>
 
@@ -218,7 +229,7 @@ function main() {
   // Register function (event handler) to be called on a mouse press
   //canvas.onmousedown = click;
   //canvas.onmousemove = function(ev) { if (ev.buttons == 1) {click(ev)}};
-  initTextures(gl, 0);
+  initTextures();
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -353,6 +364,13 @@ function renderScene(){
 
   //pass u_ModelMatrix attribute
   var startTime = performance.now();
+
+  var projMat = new Matrix4();
+  gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
+
+  var viewMat = new Matrix4();
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
+
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
   globalRotMat.rotate(g_globalAngle_Y,1,0,0);
 
