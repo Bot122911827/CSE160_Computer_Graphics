@@ -121,6 +121,12 @@ function connectVariablesToGLSL(){
     return false;
   }
 
+  u_whichTexture = gl.getUniformLocation(gl.program, 'u_whichTexture');
+  if (!u_whichTexture) {
+    console.log('Failed to get the storage location of u_whichTexture');
+    return false;
+  }
+
   //set initial value
   var identityM = new Matrix4();
   gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
@@ -326,6 +332,33 @@ function updateAnimationAngles(speed){
 }
 
 function keydown(ev){
+
+  if (ev.keyCode == 68){ //right
+    g_camera.eye[0] += 0.2;
+  } else
+  if (ev.keyCode == 65){ //left
+    g_camera.eye[0] -=0.2;
+  }
+
+  if (ev.keyCode == 83){ //back
+    g_camera.eye[2] += 0.2;
+  } else
+  if (ev.keyCode == 87){ //front
+    g_camera.eye[2] -=0.2;
+  }
+
+  if (ev.keyCode == 32){ //up
+    g_camera.eye[1] += 0.2;
+  } else
+  if (ev.keyCode == 17){ //down
+    g_camera.eye[1] -=0.2;
+  }
+
+  renderScene();
+  console.log(ev.keyCode);
+}
+
+/*function keydown(ev){
   if (ev.keyCode == 68){ //right
     g_eye[0] += 0.2;
   } else
@@ -349,14 +382,43 @@ function keydown(ev){
 
   renderScene();
   console.log(ev.keyCode);
-}
+}*/
 
 
 //var g_eye = [0,0,3];
 //var g_at = [0,0,-100];
 //var g_up = [0,1,0];
+//test();
 
-var g_camera = new Camera();
+//var test1 = new Cube();
+//g_camera = new Camera();
+//g_camera.forward();
+
+var g_map = [
+  [1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,1],
+  [1,0,0,1,1,0,0,1],
+  [1,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,1],
+  [1,0,0,0,1,0,0,1],
+  [1,0,0,0,0,0,0,1],
+];
+
+function drawMap(){
+  for (x = 0; x < 32; x+=1){
+    for (y= 0; y < 32; y+=1){
+      if (x<1 || x==31 || y==0 || y==31){
+        var body = new Cube();
+        body.color = [0.8, 1.0, 1.0, 1.0];
+        body.matrix.translate(0, -.75, 0);
+        body.matrix.scale(.4,.4,.4);
+        body.matrix.translate(x-16, 0, y-16);
+        body.renderfast();
+      }
+    }
+  }
+}
 
 function renderScene(){
 
@@ -369,10 +431,15 @@ function renderScene(){
 
   var viewMat = new Matrix4();
   viewMat.setLookAt(
-        g_camera.eye.x, g_camera.eye.y, g_camera.eye.z,
-        g_camera.at.x, g_camera.at.y, g_camera.at.z,
-        g_camera.up.x, g_camera.up.y, g_camera.up.z,);//look at (eye, at, up)
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
+        g_camera.eye.elements[0], g_camera.eye.elements[1], g_camera.eye.elements[2],
+        g_camera.at.elements[0], g_camera.at.elements[1], g_camera.at.elements[2],
+        g_camera.up.elements[0], g_camera.up.elements[1], g_camera.up.elements[2],);//look at (eye, at, up)
+  
+  /*viewMat.setLookAt(
+        g_eye[0], g_eye[1], g_eye[2],
+        g_at[0], g_at[1], g_at[2],
+        g_up[0], g_up[1], g_up[2],);//look at (eye, at, up)
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);*/
 
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,-1,0);
   globalRotMat.rotate(g_globalAngle_Y,1,0,0);
@@ -382,6 +449,9 @@ function renderScene(){
   //clear canvas
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  //Map
+  drawMap();
 
   //floor
   var floor = new Cube();
@@ -397,6 +467,12 @@ function renderScene(){
   sky.matrix.scale(50, 50, 50);
   sky.matrix.translate(-.5, -.5, -.5);
   sky.render();
+
+  //test
+  /*var test = new Cube();
+  test.color = [1.0,0.0,0.0,1.0];
+  test.matrix.scale(1, 1, 1);
+  test.render();*/
 
   //test
   var test = new Cylinder();
@@ -520,6 +596,8 @@ function renderScene(){
   leg4_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
   leg4_b.matrix.scale(0.09, .1, 0.5);
   leg4_b.render();
+
+  
 
   var duration = performance.now() - startTime;
   sendTextToHTML( " ms: " + Math.floor(duration) + " fps " + Math.floor(1000/duration), "texts");
