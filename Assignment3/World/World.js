@@ -20,6 +20,7 @@ var FSHADER_SOURCE =
   'varying vec2 v_UV;\n' + 
   'uniform vec4 u_FragColor;\n' + 
   'uniform sampler2D u_Sampler0;\n' + 
+  'uniform sampler2D u_Sampler1;\n' + 
   'uniform int u_whichTexture;\n' + 
   'void main() {\n' +
   '   if (u_whichTexture == -2){\n' + 
@@ -28,6 +29,8 @@ var FSHADER_SOURCE =
   '     gl_FragColor = vec4(v_UV, 1.0, 1.0);\n' + 
   '   } else if (u_whichTexture == 0){\n' + 
   '     gl_FragColor = texture2D(u_Sampler0, v_UV);\n' + 
+  '   } else if (u_whichTexture == -3){\n' + 
+  '     gl_FragColor = texture2D(u_Sampler1, v_UV);\n' + 
   '   } else {\n' + 
   '    gl_FragColor = vec4(1, .2, .2, 1);\n' + 
   '   }\n' + 
@@ -45,6 +48,7 @@ let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_GlobalRotateMatrix;
 let u_Sampler0;
+let u_Sampler1;
 let u_whichTexture;
 
 
@@ -180,20 +184,31 @@ function addActionsForHtmlUI(){
 
 }
 
-function initTextures() {
+function initTextures(index) {
 
   var image = new Image();  // Create the image object 
-  if (!image) {
-    console.log('Failed to create the image object');
-    return false;
-  }
-  // Register the event handler to be called on loading an image
-  image.onload = function(){ sendTextureToTEXTURE0(image); };
-   
-  // Tell the browser to load an image
-  image.src = '../resources/sky.jpg';
+    if (!image) {
+      console.log('Failed to create the image object');
+      return false;
+    }
 
-   return true;
+  if (index == 0){
+    
+    // Register the event handler to be called on loading an image
+    image.onload = function(){ sendTextureToTEXTURE0(image); };
+   
+    // Tell the browser to load an image
+    image.src = '../resources/sky.jpg';
+  }else if (index == 1){
+    // Register the event handler to be called on loading an image
+    image.onload = function(){ sendTextureToTEXTURE1(image); };
+   
+    // Tell the browser to load an image
+    image.src = '../resources/Grass.jpg';
+
+  }
+
+  return true;
 }
 
 function sendTextureToTEXTURE0(image) {
@@ -217,11 +232,31 @@ function sendTextureToTEXTURE0(image) {
   // Set the texture unit 0 to the sampler
   gl.uniform1i(u_Sampler0, 0);
   
-  //gl.clear(gl.COLOR_BUFFER_BIT);   // Clear <canvas>
-
-  //gl.drawArrays(gl.TRIANGLE_STRIP, 0, n); // Draw the rectangle
-
   console.log('finished loadTexture');
+}
+
+function sendTextureToTEXTURE1(image) {
+
+  var texture = gl.createTexture();   // Create a texture object
+  if (!texture) {
+    console.log('Failed to create the texture object');
+    return false;
+  }
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
+  // Enable texture unit1
+  gl.activeTexture(gl.TEXTURE1);
+  // Bind the texture object to the target
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Set the texture parameters
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  // Set the texture image
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+  
+  // Set the texture unit 1 to the sampler
+  gl.uniform1i(u_Sampler1, -3);
+
+  console.log('finished loadTexture1');
 }
 
 function main() {
@@ -237,7 +272,8 @@ function main() {
   //canvas.onmousemove = function(ev) { if (ev.buttons == 1) {click(ev)}};
   document.onkeydown = keydown;
 
-  initTextures();
+  initTextures(0);
+  initTextures(1);
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  
@@ -331,7 +367,7 @@ function updateAnimationAngles(speed){
   g_TailAngle = (45+4*(Math.cos(speed*g_seconds)));
 }
 
-function keydown(ev){
+/*function keydown(ev){
 
   if (ev.keyCode == 68){ //right
     g_camera.eye[0] += 0.2;
@@ -356,9 +392,9 @@ function keydown(ev){
 
   renderScene();
   console.log(ev.keyCode);
-}
+}*/
 
-/*function keydown(ev){
+function keydown(ev){
   if (ev.keyCode == 68){ //right
     g_eye[0] += 0.2;
   } else
@@ -382,16 +418,16 @@ function keydown(ev){
 
   renderScene();
   console.log(ev.keyCode);
-}*/
+}
 
 
-//var g_eye = [0,0,3];
-//var g_at = [0,0,-100];
-//var g_up = [0,1,0];
+var g_eye = [0,0,3];
+var g_at = [0,0,-100];
+var g_up = [0,1,0];
 //test();
 
 //var test1 = new Cube();
-//g_camera = new Camera();
+//var g_camera = new Camera();
 //g_camera.forward();
 
 var g_map = [
@@ -430,16 +466,16 @@ function renderScene(){
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
 
   var viewMat = new Matrix4();
-  viewMat.setLookAt(
+  /*viewMat.setLookAt(
         g_camera.eye.elements[0], g_camera.eye.elements[1], g_camera.eye.elements[2],
         g_camera.at.elements[0], g_camera.at.elements[1], g_camera.at.elements[2],
         g_camera.up.elements[0], g_camera.up.elements[1], g_camera.up.elements[2],);//look at (eye, at, up)
-  
-  /*viewMat.setLookAt(
+  */
+  viewMat.setLookAt(
         g_eye[0], g_eye[1], g_eye[2],
         g_at[0], g_at[1], g_at[2],
         g_up[0], g_up[1], g_up[2],);//look at (eye, at, up)
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);*/
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
 
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,-1,0);
   globalRotMat.rotate(g_globalAngle_Y,1,0,0);
@@ -455,6 +491,7 @@ function renderScene(){
 
   //floor
   var floor = new Cube();
+  floor.textureNum = -3;
   floor.color = [1.0,0.0,0.0,1.0];
   floor.matrix.translate(0, -.75, 0.0);
   floor.matrix.scale(10, 0, 10);
@@ -463,6 +500,7 @@ function renderScene(){
 
   //sky
   var sky = new Cube();
+  sky.textureNum = -3;
   sky.color = [1.0,0.0,0.0,1.0];
   sky.matrix.scale(50, 50, 50);
   sky.matrix.translate(-.5, -.5, -.5);
@@ -484,6 +522,7 @@ function renderScene(){
 
   //draw red body
   var body = new Cube();
+  body.textureNum = -1;
   body.color = [1.0,0.0,0.0,1.0];
   body.matrix.translate(-0.3, -0.3, -0.5);
   body.matrix.rotate(0, 1, 0, 0);
@@ -492,6 +531,7 @@ function renderScene(){
 
   //draw yellow neck
   var yellowNeck = new Cube();
+  yellowNeck.textureNum = -1;
   yellowNeck.color = [1, 1, 0, 1];
   yellowNeck.matrix.translate(-0.16, 0, -0.2);
   yellowNeck.matrix.rotate(g_NeckAngle, 1, 0, 0);
@@ -501,6 +541,7 @@ function renderScene(){
 
   //draw White head
   var whiteHead = new Cube();
+  whiteHead.textureNum = -1;
   whiteHead.matrix = BlackBase;
   whiteHead.color = [1, 1, 1, 1];
   whiteHead.matrix.translate(-0.05, 0, 0.5);
@@ -511,6 +552,7 @@ function renderScene(){
 
   //draw nose
   var nose = new Cube();
+  nose.textureNum = -1;
   nose.matrix = BlackBase;
   nose.color = [1, 0, 0, 1];
   nose.matrix.translate(0.31, 0, 1);
@@ -524,6 +566,7 @@ function renderScene(){
   //leg1_________________________________________________
   //draw leg1 right-front
   var leg1 = new Cube();
+  leg1.textureNum = -1;
   leg1.color = [0.0,1.0,1.0,1.0];
   leg1.matrix.translate(-0.27 , -0.2, -0.48);
   leg1.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
@@ -533,6 +576,7 @@ function renderScene(){
 
   //draw leg1_b right-front
   var leg1_b = new Cube();
+  leg1_b.textureNum = -1;
   leg1_b.matrix = leg1Base;
   leg1_b.color = [0.0,1.0,0.0,1.0];
   leg1_b.matrix.translate(0.01 , 0.05, 0.1);
@@ -543,6 +587,7 @@ function renderScene(){
   //leg2________________________________________________
   //draw leg2 left-front
   var leg2 = new Cube();
+  leg2.textureNum = -1;
   leg2.color = [0.0,1.0,1.0,1.0];
   leg2.matrix.translate(0.16 , -0.2, -0.48);
   leg2.matrix.rotate(g_leg1Angle, 1, 0, 0);
@@ -552,6 +597,7 @@ function renderScene(){
 
   //draw leg2_b right-front
   var leg2_b = new Cube();
+  leg2_b.textureNum = -1;
   leg2_b.matrix = leg2Base;
   leg2_b.color = [0.0,1.0,0.0,1.0];
   leg2_b.matrix.translate(0.01 , 0.05, 0.1);
@@ -562,6 +608,7 @@ function renderScene(){
   //leg3______________________________________________
   //draw leg3 left-back
   var leg3 = new Cube();
+  leg3.textureNum = -1;
   leg3.color = [0.0,1.0,1.0,1.0];
   leg3.matrix.translate(-0.27 , -0.2, 0.29);
   leg3.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
@@ -571,6 +618,7 @@ function renderScene(){
 
   //draw leg3_b right-front
   var leg3_b = new Cube();
+  leg3_b.textureNum = -1;
   leg3_b.matrix = leg3Base;
   leg3_b.color = [0.0,1.0,0.0,1.0];
   leg3_b.matrix.translate(0.01 , 0.05, 0.1);
@@ -581,6 +629,7 @@ function renderScene(){
   //leg4______________________________________________
   //draw leg4 left-back
   var leg4 = new Cube();
+  leg4.textureNum = -1;
   leg4.color = [0.0,1.0,1.0,1.0];
   leg4.matrix.translate(0.16 , -0.2, 0.29);
   leg4.matrix.rotate(g_leg1Angle, 1, 0, 0);
@@ -590,6 +639,7 @@ function renderScene(){
 
   //draw leg4_b right-front
   var leg4_b = new Cube();
+  leg4_b.textureNum = -1;
   leg4_b.matrix = leg4Base;
   leg4_b.color = [0.0,1.0,0.0,1.0];
   leg4_b.matrix.translate(0.01 , 0.05, 0.1);
