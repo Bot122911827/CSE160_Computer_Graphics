@@ -125,6 +125,13 @@ function connectVariablesToGLSL(){
     return false;
   }
 
+  var u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
+  if (!u_Sampler1) {
+    console.log('Failed to get the storage location of u_Sampler1');
+    return false;
+  }
+
+
   u_whichTexture = gl.getUniformLocation(gl.program, 'u_whichTexture');
   if (!u_whichTexture) {
     console.log('Failed to get the storage location of u_whichTexture');
@@ -254,7 +261,7 @@ function sendTextureToTEXTURE1(image) {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
   
   // Set the texture unit 1 to the sampler
-  gl.uniform1i(u_Sampler1, -3);
+  gl.uniform1i(u_Sampler1, 1);
 
   console.log('finished loadTexture1');
 }
@@ -298,7 +305,6 @@ function logKey(e) {
 function tick(){
 
   g_seconds  =performance.now()/1000-g_startTime;
-  //console.log(g_seconds);
 
   updateAnimationAngles(5);
 
@@ -500,17 +506,10 @@ function renderScene(){
 
   //sky
   var sky = new Cube();
-  sky.textureNum = -3;
   sky.color = [1.0,0.0,0.0,1.0];
   sky.matrix.scale(50, 50, 50);
   sky.matrix.translate(-.5, -.5, -.5);
   sky.render();
-
-  //test
-  /*var test = new Cube();
-  test.color = [1.0,0.0,0.0,1.0];
-  test.matrix.scale(1, 1, 1);
-  test.render();*/
 
   //test
   var test = new Cylinder();
