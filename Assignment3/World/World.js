@@ -21,6 +21,7 @@ var FSHADER_SOURCE =
   'uniform vec4 u_FragColor;\n' + 
   'uniform sampler2D u_Sampler0;\n' + 
   'uniform sampler2D u_Sampler1;\n' + 
+  'uniform sampler2D u_Sampler2;\n' + 
   'uniform int u_whichTexture;\n' + 
   'void main() {\n' +
   '   if (u_whichTexture == -2){\n' + 
@@ -31,6 +32,8 @@ var FSHADER_SOURCE =
   '     gl_FragColor = texture2D(u_Sampler0, v_UV);\n' + 
   '   } else if (u_whichTexture == 1){\n' + 
   '     gl_FragColor = texture2D(u_Sampler1, v_UV);\n' + 
+  '   } else if (u_whichTexture == 2){\n' + 
+  '     gl_FragColor = texture2D(u_Sampler2, v_UV);\n' + 
   '   } else {\n' + 
   '     gl_FragColor = vec4(1, .2, .2, 1);\n' + 
   '   }\n' + 
@@ -49,6 +52,7 @@ let u_ViewMatrix;
 let u_GlobalRotateMatrix;
 let u_Sampler0;
 let u_Sampler1;
+let u_Sampler2;
 let u_whichTexture;
 
 
@@ -119,15 +123,21 @@ function connectVariablesToGLSL(){
   }
 
   // Get the storage location of u_Sampler
-  var u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
+  u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
   if (!u_Sampler0) {
     console.log('Failed to get the storage location of u_Sampler0');
     return false;
   }
 
-  var u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
+  u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
   if (!u_Sampler1) {
     console.log('Failed to get the storage location of u_Sampler1');
+    return false;
+  }
+
+  u_Sampler2 = gl.getUniformLocation(gl.program, 'u_Sampler2');
+  if (!u_Sampler2) {
+    console.log('Failed to get the storage location of u_Sampler2');
     return false;
   }
 
@@ -205,6 +215,12 @@ function initTextures() {
     return false;
   }
 
+  var image2 = new Image();  // Create the image object 
+  if (!image1) {
+    console.log('Failed to create the image1 object');
+    return false;
+  }
+
   // Register the event handler to be called on loading an image
   image0.onload = function(){ sendTextureToTEXTURE0(image0); };
    
@@ -216,6 +232,12 @@ function initTextures() {
    
   // Tell the browser to load an image
   image1.src = '../resources/Grass.jpg';
+
+  // Register the event handler to be called on loading an image
+  image2.onload = function(){ sendTextureToTEXTURE2(image2); };
+   
+  // Tell the browser to load an image
+  image2.src = '../resources/Mud.png';
 
   return true;
 }
@@ -239,7 +261,7 @@ function sendTextureToTEXTURE0(image) {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
   
   // Set the texture unit 0 to the sampler0
-  gl.uniform1i(u_Sampler0, gl.TEXTURE0);
+  gl.uniform1i(u_Sampler0, 0);
   
   console.log('finished loadTexture0');
 }
@@ -263,9 +285,33 @@ function sendTextureToTEXTURE1(image) {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
   
   // Set the texture unit 1 to the sampler1
-  gl.uniform1i(u_Sampler1, gl.TEXTURE1);
+  gl.uniform1i(u_Sampler1, 1);
   
   console.log('finished loadTexture1');
+}
+
+function sendTextureToTEXTURE2(image) {
+
+  var texture = gl.createTexture();   // Create a texture object
+  if (!texture) {
+    console.log('Failed to create the texture object');
+    return false;
+  }
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
+  // Enable texture unit1
+  gl.activeTexture(gl.TEXTURE2);
+  // Bind the texture object to the target
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Set the texture parameters
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  // Set the texture image
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+  
+  // Set the texture unit 1 to the sampler1
+  gl.uniform1i(u_Sampler2, 2);
+  
+  console.log('finished loadTexture2');
 }
 
 function main() {
@@ -443,6 +489,7 @@ function drawWall(){
     for (y= 0; y < 64; y+=1){
       if (x<1 || x==63 || y==0 || y==63){
         var body = new Cube();
+        body.textureNum = 2;
         body.color = [0.8, 1.0, 1.0, 1.0];
         body.matrix.translate(0, -.75, 0);
         body.matrix.scale(.4,.4,.4);
@@ -459,6 +506,7 @@ function drawMap(){
       if (g_map[x][y]>0){
         for (j= 0; j < g_map[x][y]; j+=1){
           var body = new Cube();
+          body.textureNum = 2;
           body.color = [1.0, 1.0, 1.0, 1.0];
           body.matrix.translate(0, -0.25, 0);
           body.matrix.translate(x-10, -.75-(-1)*j, y-4);
@@ -496,8 +544,23 @@ function initEventHandlers(canvas, currentAngle) {
       // Limit x-axis rotation angle to -90 to 90 degrees
       currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
       currentAngle[1] = currentAngle[1] + dx;
-      g_globalAngle = -x;
-      g_globalAngle_Y = -y;
+      //g_globalAngle = -x;
+      //g_globalAngle_Y = -y;
+      /*if (lastX - x <0){
+        g_camera.panX(-x/3000);
+      }else{
+        g_camera.panX(x/3000);
+      }
+
+
+      if (lastY - y<0){
+        g_camera.panY(y/3000);
+      }else{
+        g_camera.panY(-y/3000);
+      }*/
+
+      g_camera.panX((lastX - x)/5);
+      g_camera.panY((lastY - y));
       //g_camera.at.elements[1] = -x;
       //g_camera.at.elements[2] = -y;
     }
@@ -521,6 +584,7 @@ function renderScene(){
         g_camera.at.elements[0], g_camera.at.elements[1], g_camera.at.elements[2],
         g_camera.up.elements[0], g_camera.up.elements[1], g_camera.up.elements[2],);//look at (eye, at, up)
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
+  
 
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,-1,0);
   globalRotMat.rotate(g_globalAngle_Y,1,0,0);

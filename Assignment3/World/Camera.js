@@ -69,12 +69,6 @@ class Camera{
     }
 
     panRight(){
-
-        /*Compute the forward vector  f = at - eye;
-        Rotate the vector f by alpha (decide a value) degrees around the up vector.
-        Create a rotation matrix: rotationMatrix.setRotate(alpha, up.x, up.y, up.z).
-        Multiply this matrix by f to compute f_prime = rotationMatrix.multiplyVector3(f);
-        Update the "at"vector to be at = eye + f_prime;*/
         let f = new Vector3();
         f.set(this.at);
         f.sub(this.eye);
@@ -97,6 +91,32 @@ class Camera{
         tmp.add(this.eye);
         tmp.add(f_prime);
         this.at.set(tmp);
+    }
+
+    panX(alpha){
+        let f = new Vector3();
+        f.set(this.at);
+        f.sub(this.eye);
+        this.rotationMatrix.setRotate(alpha, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
+        var f_prime = this.rotationMatrix.multiplyVector3(f);
+        let tmp = new Vector3();
+        tmp.add(this.eye);
+        tmp.add(f_prime);
+        this.at.set(tmp);
+    }
+
+    panY(alpha){
+        /*let f = new Vector3();
+        f.set(this.at);
+        f.sub(this.eye);
+        this.rotationMatrix.setRotate(alpha, this.at.elements[0], this.at.elements[1], this.at.elements[2]);
+        var f_prime = this.rotationMatrix.multiplyVector3(f);
+        let tmp = new Vector3();
+        tmp.add(this.eye);
+        tmp.add(f_prime);
+        this.at.set(tmp);*/
+
+        this.at.elements[1] += alpha/5;
     }
 
 }
