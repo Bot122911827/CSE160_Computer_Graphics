@@ -29,10 +29,10 @@ var FSHADER_SOURCE =
   '     gl_FragColor = vec4(v_UV, 1.0, 1.0);\n' + 
   '   } else if (u_whichTexture == 0){\n' + 
   '     gl_FragColor = texture2D(u_Sampler0, v_UV);\n' + 
-  '   } else if (u_whichTexture == -3){\n' + 
+  '   } else if (u_whichTexture == 1){\n' + 
   '     gl_FragColor = texture2D(u_Sampler1, v_UV);\n' + 
   '   } else {\n' + 
-  '    gl_FragColor = vec4(1, .2, .2, 1);\n' + 
+  '     gl_FragColor = vec4(1, .2, .2, 1);\n' + 
   '   }\n' + 
   '}\n';
 
@@ -191,37 +191,39 @@ function addActionsForHtmlUI(){
 
 }
 
-function initTextures(index) {
+function initTextures() {
 
-  var image = new Image();  // Create the image object 
-    if (!image) {
-      console.log('Failed to create the image object');
+  var image0 = new Image();  // Create the image object 
+    if (!image0) {
+      console.log('Failed to create the image0 object');
       return false;
     }
-
-  if (index == 0){
-    
-    // Register the event handler to be called on loading an image
-    image.onload = function(){ sendTextureToTEXTURE0(image); };
-   
-    // Tell the browser to load an image
-    image.src = '../resources/sky.jpg';
-  }else if (index == 1){
-    // Register the event handler to be called on loading an image
-    image.onload = function(){ sendTextureToTEXTURE1(image); };
-   
-    // Tell the browser to load an image
-    image.src = '../resources/Grass.jpg';
-
+  
+  var image1 = new Image();  // Create the image object 
+  if (!image1) {
+    console.log('Failed to create the image1 object');
+    return false;
   }
+
+  // Register the event handler to be called on loading an image
+  image0.onload = function(){ sendTextureToTEXTURE0(image0); };
+   
+  // Tell the browser to load an image
+  image0.src = '../resources/sky1.jpg';
+
+  // Register the event handler to be called on loading an image
+  image1.onload = function(){ sendTextureToTEXTURE1(image1); };
+   
+  // Tell the browser to load an image
+  image1.src = '../resources/Grass.jpg';
 
   return true;
 }
 
 function sendTextureToTEXTURE0(image) {
 
-  var texture = gl.createTexture();   // Create a texture object
-  if (!texture) {
+  var texture0 = gl.createTexture();   // Create a texture object
+  if (!texture0) {
     console.log('Failed to create the texture object');
     return false;
   }
@@ -229,17 +231,17 @@ function sendTextureToTEXTURE0(image) {
   // Enable texture unit0
   gl.activeTexture(gl.TEXTURE0);
   // Bind the texture object to the target
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, texture0);
 
   // Set the texture parameters
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   // Set the texture image
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
   
-  // Set the texture unit 0 to the sampler
-  gl.uniform1i(u_Sampler0, 0);
+  // Set the texture unit 0 to the sampler0
+  gl.uniform1i(u_Sampler0, gl.TEXTURE0);
   
-  console.log('finished loadTexture');
+  console.log('finished loadTexture0');
 }
 
 function sendTextureToTEXTURE1(image) {
@@ -260,9 +262,9 @@ function sendTextureToTEXTURE1(image) {
   // Set the texture image
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
   
-  // Set the texture unit 1 to the sampler
-  gl.uniform1i(u_Sampler1, 1);
-
+  // Set the texture unit 1 to the sampler1
+  gl.uniform1i(u_Sampler1, gl.TEXTURE1);
+  
   console.log('finished loadTexture1');
 }
 
@@ -275,19 +277,18 @@ function main() {
   addActionsForHtmlUI();
 
   // Register function (event handler) to be called on a mouse press
-  //canvas.onmousedown = click;
-  //canvas.onmousemove = function(ev) { if (ev.buttons == 1) {click(ev)}};
+  canvas.onmousedown = click;
+  canvas.onmousemove = function(ev) { if (ev.buttons == 1) {click(ev)}};
   document.onkeydown = keydown;
 
-  initTextures(0);
-  initTextures(1);
+  initTextures();
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  
 
   //mouse move
-  //var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
-  //initEventHandlers(canvas, currentAngle);
+  var currentAngle = [0.0, 0.0]; // Current rotation angle ([x-axis, y-axis] degrees)
+  initEventHandlers(canvas, currentAngle);
 
   // Clear <canvas>
   requestAnimationFrame(tick);
@@ -373,93 +374,136 @@ function updateAnimationAngles(speed){
   g_TailAngle = (45+4*(Math.cos(speed*g_seconds)));
 }
 
-/*function keydown(ev){
-
-  if (ev.keyCode == 68){ //right
-    g_camera.eye[0] += 0.2;
-  } else
-  if (ev.keyCode == 65){ //left
-    g_camera.eye[0] -=0.2;
-  }
-
-  if (ev.keyCode == 83){ //back
-    g_camera.eye[2] += 0.2;
-  } else
-  if (ev.keyCode == 87){ //front
-    g_camera.eye[2] -=0.2;
-  }
-
-  if (ev.keyCode == 32){ //up
-    g_camera.eye[1] += 0.2;
-  } else
-  if (ev.keyCode == 17){ //down
-    g_camera.eye[1] -=0.2;
-  }
-
-  renderScene();
-  console.log(ev.keyCode);
-}*/
-
 function keydown(ev){
+
   if (ev.keyCode == 68){ //right
-    g_eye[0] += 0.2;
+    g_camera.right();
   } else
   if (ev.keyCode == 65){ //left
-    g_eye[0] -=0.2;
+    g_camera.left();
   }
 
   if (ev.keyCode == 83){ //back
-    g_eye[2] += 0.2;
+    g_camera.back();
   } else
   if (ev.keyCode == 87){ //front
-    g_eye[2] -=0.2;
+    g_camera.forward();
   }
 
   if (ev.keyCode == 32){ //up
-    g_eye[1] += 0.2;
+    g_camera.eye.elements[1] += 0.2;
   } else
   if (ev.keyCode == 17){ //down
-    g_eye[1] -=0.2;
+    g_camera.eye.elements[1] -=0.2;
+  }
+
+  if (ev.keyCode == 81){ //left-look
+    g_camera.panRight();
+  } else
+  if (ev.keyCode == 69){ //right-look
+    g_camera.panLeft();
   }
 
   renderScene();
   console.log(ev.keyCode);
 }
 
-
-var g_eye = [0,0,3];
-var g_at = [0,0,-100];
-var g_up = [0,1,0];
-//test();
-
-//var test1 = new Cube();
-//var g_camera = new Camera();
-//g_camera.forward();
+var g_camera = new Camera();
 
 var g_map = [
-  [1,1,1,1,1,1,1,1],
-  [1,0,0,0,0,0,0,1],
-  [1,0,0,0,0,0,0,1],
-  [1,0,0,1,1,0,0,1],
-  [1,0,0,0,0,0,0,1],
-  [1,0,0,0,0,0,0,1],
-  [1,0,0,0,1,0,0,1],
-  [1,0,0,0,0,0,0,1],
+  [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,1,0,0,0,0,0,0,0,1,0,0,0,3],
+  [3,0,0,1,0,0,0,0,0,0,0,1,0,0,0,3],
+  [3,0,0,2,2,2,2,0,2,2,2,2,0,0,0,3],
+  [3,0,0,2,0,0,2,0,2,0,0,2,0,0,0,3],
+  [3,0,0,2,0,0,2,0,2,0,0,2,0,0,0,3],
+  [3,0,0,2,2,2,2,0,2,2,2,2,0,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,1,0,0,0,0,0,0,0,3],
+  [3,2,2,2,1,0,0,1,0,0,1,0,0,0,0,3],
+
+  [0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,3],
+  [0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,3],
+  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,3],
+  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [3,0,0,2,2,2,2,0,2,2,2,2,0,0,0,3],
+  [3,0,0,2,0,0,2,0,2,0,0,2,0,0,0,3],
+  [3,0,0,2,0,0,2,0,2,0,0,2,0,0,0,3],
+  [3,0,0,2,2,2,2,0,2,2,2,2,0,0,0,3],
+  [3,0,0,1,0,0,0,0,0,0,0,1,0,0,0,3],
+  [3,0,0,1,0,0,0,1,0,0,0,1,0,0,0,3],
+  [3,0,0,0,0,0,0,1,0,0,0,0,0,0,0,3],
+  [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
 ];
 
-function drawMap(){
-  for (x = 0; x < 32; x+=1){
-    for (y= 0; y < 32; y+=1){
-      if (x<1 || x==31 || y==0 || y==31){
+function drawWall(){
+  for (x = 0; x < 64; x+=1){
+    for (y= 0; y < 64; y+=1){
+      if (x<1 || x==63 || y==0 || y==63){
         var body = new Cube();
         body.color = [0.8, 1.0, 1.0, 1.0];
         body.matrix.translate(0, -.75, 0);
         body.matrix.scale(.4,.4,.4);
-        body.matrix.translate(x-16, 0, y-16);
+        body.matrix.translate(x-30, 0, y-30);
         body.renderfast();
       }
     }
   }
+}
+
+function drawMap(){
+  for (x = 0; x < 24; x+=1){
+    for (y= 0; y < 16; y+=1){
+      if (g_map[x][y]>0){
+        for (j= 0; j < g_map[x][y]; j+=1){
+          var body = new Cube();
+          body.color = [1.0, 1.0, 1.0, 1.0];
+          body.matrix.translate(0, -0.25, 0);
+          body.matrix.translate(x-10, -.75-(-1)*j, y-4);
+          body.renderfast();
+        }
+        
+      }
+    }
+  }
+}
+
+function initEventHandlers(canvas, currentAngle) {
+  var dragging = false;         // Dragging or not
+  var lastX = -1, lastY = -1;   // Last position of the mouse
+
+  canvas.onmousedown = function(ev) {   // Mouse is pressed
+    var x = ev.clientX, y = ev.clientY;
+    // Start dragging if a moue is in <canvas>
+    var rect = ev.target.getBoundingClientRect();
+    if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
+      lastX = x; lastY = y;
+      dragging = true;
+    }
+
+  };
+
+  canvas.onmouseup = function(ev) { dragging = false;  }; // Mouse is released
+
+  canvas.onmousemove = function(ev) { // Mouse is moved
+    var x = ev.clientX, y = ev.clientY;
+    if (dragging) {
+      var factor = 100/canvas.height; // The rotation ratio
+      var dx = factor * (x - lastX);
+      var dy = factor * (y - lastY);
+      // Limit x-axis rotation angle to -90 to 90 degrees
+      currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
+      currentAngle[1] = currentAngle[1] + dx;
+      g_globalAngle = -x;
+      g_globalAngle_Y = -y;
+      //g_camera.at.elements[1] = -x;
+      //g_camera.at.elements[2] = -y;
+    }
+    lastX = x, lastY = y;
+    
+  };
 }
 
 function renderScene(){
@@ -467,20 +511,15 @@ function renderScene(){
   //pass u_ModelMatrix attribute
   var startTime = performance.now();
 
-  var projMat = new Matrix4();
-  projMat.setPerspective(60, canvas.width/canvas.height, .1, 100);//perspective
-  gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
+  /*var projMat = new Matrix4();
+  projMat.setPerspective(60, canvas.width/canvas.height, .1, 100);//perspective*/
+  gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_camera.projectionMatrix.elements);
 
   var viewMat = new Matrix4();
-  /*viewMat.setLookAt(
+  viewMat.setLookAt(
         g_camera.eye.elements[0], g_camera.eye.elements[1], g_camera.eye.elements[2],
         g_camera.at.elements[0], g_camera.at.elements[1], g_camera.at.elements[2],
         g_camera.up.elements[0], g_camera.up.elements[1], g_camera.up.elements[2],);//look at (eye, at, up)
-  */
-  viewMat.setLookAt(
-        g_eye[0], g_eye[1], g_eye[2],
-        g_at[0], g_at[1], g_at[2],
-        g_up[0], g_up[1], g_up[2],);//look at (eye, at, up)
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
 
   var globalRotMat = new Matrix4().rotate(g_globalAngle,0,-1,0);
@@ -492,26 +531,27 @@ function renderScene(){
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  //Map
+  //Map_Wall
+  drawWall();
   drawMap();
 
   //floor
   var floor = new Cube();
-  floor.textureNum = -3;
   floor.color = [1.0,0.0,0.0,1.0];
+  floor.textureNum = 1;
   floor.matrix.translate(0, -.75, 0.0);
-  floor.matrix.scale(10, 0, 10);
+  floor.matrix.scale(32, 0, 32);
   floor.matrix.translate(-.5, 0, -.5);
-  floor.render();
+  floor.renderfast();
 
   //sky
   var sky = new Cube();
   sky.color = [1.0,0.0,0.0,1.0];
   sky.matrix.scale(50, 50, 50);
   sky.matrix.translate(-.5, -.5, -.5);
-  sky.render();
+  sky.renderfast();
 
-  //test
+  //tail
   var test = new Cylinder();
   test.color = [1.0,0.0,1.0,1.0];
   test.matrix.translate(0.0 , -0.1, 0.4);
@@ -526,7 +566,7 @@ function renderScene(){
   body.matrix.translate(-0.3, -0.3, -0.5);
   body.matrix.rotate(0, 1, 0, 0);
   body.matrix.scale(0.6, .3, 1);
-  body.render();
+  body.renderfast();
 
   //draw yellow neck
   var yellowNeck = new Cube();
@@ -536,7 +576,7 @@ function renderScene(){
   yellowNeck.matrix.rotate(g_NeckAngle, 1, 0, 0);
   var BlackBase = new Matrix4(yellowNeck.matrix);
   yellowNeck.matrix.scale(0.3, .3, .5);
-  yellowNeck.render();
+  yellowNeck.renderfast();
 
   //draw White head
   var whiteHead = new Cube();
@@ -547,7 +587,7 @@ function renderScene(){
   whiteHead.matrix.rotate(g_HeadAngle, 1, 0, 0);
   whiteHead.matrix.scale(0.4, 0.3, 0.5);
   whiteHead.matrix.rotate(-180, 1, 0, 0);
-  whiteHead.render();
+  whiteHead.renderfast();
 
   //draw nose
   var nose = new Cube();
@@ -558,7 +598,7 @@ function renderScene(){
   nose.matrix.rotate(g_HeadAngle, 1, 0, 0);
   nose.matrix.scale(0.4, 0.3, 0.5);
   nose.matrix.rotate(-180, 1, 0, 0);
-  nose.render();
+  nose.renderfast();
 
   //legs
 
@@ -571,7 +611,7 @@ function renderScene(){
   leg1.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
   var leg1Base = new Matrix4(leg1.matrix);
   leg1.matrix.scale(0.11, .2, 0.3);
-  leg1.render();
+  leg1.renderfast();
 
   //draw leg1_b right-front
   var leg1_b = new Cube();
@@ -581,7 +621,7 @@ function renderScene(){
   leg1_b.matrix.translate(0.01 , 0.05, 0.1);
   leg1_b.matrix.rotate(g_leg2_1Angle, 1, 0, 0);
   leg1_b.matrix.scale(0.09, .1, 0.5);
-  leg1_b.render();
+  leg1_b.renderfast();
 
   //leg2________________________________________________
   //draw leg2 left-front
@@ -592,7 +632,7 @@ function renderScene(){
   leg2.matrix.rotate(g_leg1Angle, 1, 0, 0);
   var leg2Base = new Matrix4(leg2.matrix);
   leg2.matrix.scale(0.11, .2, 0.3);
-  leg2.render();
+  leg2.renderfast();
 
   //draw leg2_b right-front
   var leg2_b = new Cube();
@@ -602,7 +642,7 @@ function renderScene(){
   leg2_b.matrix.translate(0.01 , 0.05, 0.1);
   leg2_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
   leg2_b.matrix.scale(0.09, .1, 0.5);
-  leg2_b.render();
+  leg2_b.renderfast();
 
   //leg3______________________________________________
   //draw leg3 left-back
@@ -613,7 +653,7 @@ function renderScene(){
   leg3.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
   var leg3Base = new Matrix4(leg3.matrix);
   leg3.matrix.scale(0.11, .2, 0.3);
-  leg3.render();
+  leg3.renderfast();
 
   //draw leg3_b right-front
   var leg3_b = new Cube();
@@ -623,7 +663,7 @@ function renderScene(){
   leg3_b.matrix.translate(0.01 , 0.05, 0.1);
   leg3_b.matrix.rotate(g_leg2_1Angle, 1, 0, 0);
   leg3_b.matrix.scale(0.09, .1, 0.5);
-  leg3_b.render();
+  leg3_b.renderfast();
 
   //leg4______________________________________________
   //draw leg4 left-back
@@ -634,7 +674,7 @@ function renderScene(){
   leg4.matrix.rotate(g_leg1Angle, 1, 0, 0);
   var leg4Base = new Matrix4(leg4.matrix);
   leg4.matrix.scale(0.11, .2, 0.3);
-  leg4.render();
+  leg4.renderfast();
 
   //draw leg4_b right-front
   var leg4_b = new Cube();
@@ -644,7 +684,7 @@ function renderScene(){
   leg4_b.matrix.translate(0.01 , 0.05, 0.1);
   leg4_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
   leg4_b.matrix.scale(0.09, .1, 0.5);
-  leg4_b.render();
+  leg4_b.renderfast();
 
   
 

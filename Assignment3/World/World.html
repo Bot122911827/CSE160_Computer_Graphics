@@ -2,7 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>World</title>
+    <title>CS1.6 Iceworld</title>
+    <style>
+      img {
+        width: 30%;
+        height: 30%;
+      }
+      </style>
   </head>
 
   <body onload="main()">
@@ -26,17 +32,22 @@
     <button type="button" id="animationLegOffButton">OFF</button>
     <br>
     Camera Angle<input type="range" min="-180" max="180" value="0" class="slider" id="angleSlide">
+    <br>    <br>
+    MiniMap (CS1.6 Iceworld): Can you find my little hourse?
+    <br>
+
+    <img src="../resources/MiniMap.PNG" alt="MiniMap">
 
     <script src="../lib/cuon-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
     <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Camera.js"></script>
     <script src="World.js"></script>
     <script src="Point.js"></script>
     <script src="Triangle.js"></script>
     <script src="Circle.js"></script>
     <script src="Cube.js"></script>
     <script src="cylinder.js"></script>
-    <script src="Camera.js"></script>
   </body>
 </html>
