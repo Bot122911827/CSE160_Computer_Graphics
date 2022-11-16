@@ -1,0 +1,50 @@
+                                                  <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CS1.6 Iceworld</title>
+    <style>
+      img {
+        width: 30%;
+        height: 30%;
+      }
+      </style>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="1000" height="1000">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <p id="texts">XXX</p>
+
+    Normal On<button type="button" id="normalOn">ON</button><br>
+    Normal Off<button type="button" id="normalOff">OFF</button><br>
+
+    Light Animation On<button type="button" id="AnimationOn">ON</button><br>
+    Light Animation Off<button type="button" id="AnimationOff">OFF</button>
+
+    <br><br>
+
+    Light On<button type="button" id="LightOn">ON</button>
+    Light Off<button type="button" id="LightOff">OFF</button>
+    <p>
+    Light X <input type="range" min="-1500" max="1500" value="0" class="slider" id="lightSliderX">
+    Light Y <input type="range" min="-1500" max="1500" value="0" class="slider" id="lightSliderZ">
+    Light Z <input type="range" min="-1500" max="1500" value="0" class="slider" id="lightSliderY">
+    <p>
+
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Camera.js"></script>
+    <script src="World.js"></script>
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="Cube.js"></script>
+    <script src="cylinder.js"></script>
+    <script src="Sphere.js"></script>
+  </body>
+</html>

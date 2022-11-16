@@ -1,0 +1,43 @@
+                                                  <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Animal</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="1000" height="1000">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <p id="texts">XXX</p>
+
+    
+
+    <br>
+    Neck Angle<input type="range" min="-150" max="-90" value="-120" class="slider" id="NeckAngle">
+    <button type="button" id="animationNeckOnButton">ON</button>
+    <button type="button" id="animationNeckOffButton">OFF</button>
+    <br>
+    Head & Nose Angle<input type="range" min="95" max="130" value="110" class="slider" id="HeadAngle">
+    <button type="button" id="animationHeadOnButton">ON</button>
+    <button type="button" id="animationHeadOffButton">OFF</button>
+    <br>
+    Legs
+    <button type="button" id="animationLegOnButton">ON</button>
+    <button type="button" id="animationLegOffButton">OFF</button>
+    <br>
+    Camera Angle<input type="range" min="-180" max="180" value="0" class="slider" id="angleSlide">
+
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+    <script src="BlockyAnimal.js"></script>
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="Cube.js"></script>
+    <script src="cylinder.js"></script>
+  </body>
+</html>

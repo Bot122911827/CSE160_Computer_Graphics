@@ -4,25 +4,37 @@ var VSHADER_SOURCE =
   'precision mediump float;\n' +
   'attribute vec4 a_Position;\n' +
   'attribute vec2 a_UV;\n' +
+  'attribute vec3 a_Normal;\n' +
   'varying vec2 v_UV;\n' +
+  'varying vec3 v_Normal;\n' +
+  'varying vec4 v_VertPos;\n' +
   'uniform mat4 u_ModelMatrix;\n' +
+  'uniform mat4 u_NormalMatrix;\n' 
   'uniform mat4 u_GlobalRotateMatrix;\n' +
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjectionMatrix;\n' +
   'void main() {\n' +
   '  gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;\n' +
   '  v_UV = a_UV;\n' + 
+  '  v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 1)));\n' + 
+  //'  v_Normal = a_Normal;\n' +
+  '  v_VertPos = u_ModelMatrix * a_Position;\n' + 
   '}\n';
 
 // Fragment shader program
 var FSHADER_SOURCE =
   'precision mediump float;\n' +
   'varying vec2 v_UV;\n' + 
+  'varying vec3 v_Normal;\n' +
   'uniform vec4 u_FragColor;\n' + 
   'uniform sampler2D u_Sampler0;\n' + 
   'uniform sampler2D u_Sampler1;\n' + 
   'uniform sampler2D u_Sampler2;\n' + 
   'uniform int u_whichTexture;\n' + 
+  'uniform vec3 u_lightPos;\n' + 
+  'uniform vec3 u_cameraPos;\n' + 
+  'varying vec4 v_VertPos;\n' + 
+  'uniform bool u_lightOn;\n' + 
   'void main() {\n' +
   '   if (u_whichTexture == -2){\n' + 
   '     gl_FragColor = u_FragColor;\n' + 
@@ -34,9 +46,28 @@ var FSHADER_SOURCE =
   '     gl_FragColor = texture2D(u_Sampler1, v_UV);\n' + 
   '   } else if (u_whichTexture == 2){\n' + 
   '     gl_FragColor = texture2D(u_Sampler2, v_UV);\n' + 
+  '   } else if (u_whichTexture == 3){\n' + 
+  '     gl_FragColor = vec4((v_Normal+1.0)/2.0, 1.0);\n' + 
   '   } else {\n' + 
   '     gl_FragColor = vec4(1, .2, .2, 1);\n' + 
   '   }\n' + 
+  '   vec3 lightVector = u_lightPos-vec3(v_VertPos);\n' + 
+  '   float r=length(lightVector);\n' + 
+  '   vec3 L = normalize(lightVector);\n' + 
+  '   vec3 N = normalize(v_Normal);\n' + 
+  '   float nDotL = max(dot(N, L), 0.0);\n' + 
+  '   vec3 R = reflect(-L, N);\n' + 
+  '   vec3 E = normalize(u_cameraPos - vec3(v_VertPos));\n' +
+  '   float specular = pow(max(dot(E, R), 0.0), 64.0) * 0.8;\n' +
+  '   vec3 diffuse = vec3(gl_FragColor) * nDotL * 0.7;\n' + 
+  '   vec3 ambient = vec3(gl_FragColor) * 0.2;\n' + 
+  '   if (u_lightOn){\n' + 
+  '     if (u_whichTexture == 0){\n' + 
+  '       gl_FragColor = vec4(specular+diffuse+ambient, 1.0);\n' + 
+  '     } else {\n' + 
+  '       gl_FragColor = vec4(diffuse+ambient, 1.0);\n' + 
+  '     }\n' + 
+  '   }\n' +
   '}\n';
 
 //Global Variables
@@ -44,9 +75,11 @@ let canvas;
 let gl;
 let a_Position;
 let a_UV;
+let a_Normal;
 let u_FragColor;
 let u_Size;
 let u_ModelMatrix;
+let u_NormalMatrix;
 let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_GlobalRotateMatrix;
@@ -54,6 +87,9 @@ let u_Sampler0;
 let u_Sampler1;
 let u_Sampler2;
 let u_whichTexture;
+let u_lightPos;
+let u_cameraPos;
+let u_lightOn;
 
 
 function setupWebGL(){
@@ -90,6 +126,12 @@ function connectVariablesToGLSL(){
     return;
   }
 
+  a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
+  if (a_Normal < 0) {
+    console.log('Failed to get the storage location of a_Normal');
+    return;
+  }
+
   // Get the storage location of u_FragColor
   u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
   if (!u_FragColor) {
@@ -97,10 +139,34 @@ function connectVariablesToGLSL(){
     return;
   }
 
+  u_lightPos = gl.getUniformLocation(gl.program, 'u_lightPos');
+  if (!u_lightPos) {
+    console.log('Failed to get the storage location of u_lightPos');
+    return;
+  }
+
+  u_lightOn = gl.getUniformLocation(gl.program, 'u_lightOn');
+  if (!u_lightOn) {
+    console.log('Failed to get the storage location of u_lightOn');
+    return;
+  }
+
+  u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
+  if (!u_cameraPos) {
+    console.log('Failed to get the storage location of u_cameraPos');
+    return;
+  }
+
   // Get the storage location of Size
   u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   if (!u_ModelMatrix) {
     console.log('Failed to get the storage location of u_ModelMatrix');
+    return;
+  }
+
+  u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
+  if (!u_NormalMatrix) {
+    console.log('Failed to get the storage location of u_NormalMatrix');
     return;
   }
 
@@ -176,28 +242,29 @@ let g_HeadAnimation=false;
 let g_NeckAnimation=false;
 let g_Leg1Animation=false;
 let g_Leg2Animation=false;
+let g_normalOn=false;
+let g_AnimationOn=false;
+let g_lightPos = [6,1,-4];
+let g_lightOn=true;
 
 function addActionsForHtmlUI(){
 
-  //buttons
-  document.getElementById("animationNeckOnButton").onclick = function() {g_NeckAnimation=true};
-  document.getElementById("animationNeckOffButton").onclick = function() {g_NeckAnimation=false};
+  //normals
+  document.getElementById("normalOn").onclick = function() {g_normalOn=true};
+  document.getElementById("normalOff").onclick = function() {g_normalOn=false};
 
-  document.getElementById("animationHeadOnButton").onclick = function() {g_HeadAnimation=true};
-  document.getElementById("animationHeadOffButton").onclick = function() {g_HeadAnimation=false};
+  //light animation
+  document.getElementById("AnimationOn").onclick = function() {g_AnimationOn=true};
+  document.getElementById("AnimationOff").onclick = function() {g_AnimationOn=false};
 
-  //leg anime buttons
-  document.getElementById("animationLegOnButton").onclick = function() {g_Leg1Animation=true; g_Leg2Animation=true;};
-  document.getElementById("animationLegOffButton").onclick = function() {g_Leg1Animation=false; g_Leg2Animation=false;};
+  //light On/Off
+  document.getElementById("LightOn").onclick = function() {g_lightOn=true};
+  document.getElementById("LightOff").onclick = function() {g_lightOn=false};
 
   //slider
-  document.getElementById('angleSlide').addEventListener('mousemove', function() {g_globalAngle = -this.value; renderScene();});
-
-  document.getElementById('NeckAngle').addEventListener('mousemove', function() {g_NeckAngle = this.value; renderScene();});
-  document.getElementById('HeadAngle').addEventListener('mousemove', function() {g_HeadAngle = this.value; renderScene();});
-
-  //shift
-  document.addEventListener('click', logKey);
+  document.getElementById('lightSliderX').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[0] = -this.value/100; renderScene();}});
+  document.getElementById('lightSliderY').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[1] = this.value/100; renderScene();}});
+  document.getElementById('lightSliderZ').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[2] = this.value/100; renderScene();};});
 
 }
 
@@ -343,17 +410,12 @@ function main() {
 var g_startTime = performance.now()/1000;
 varg_seconds = performance.now()/1000-g_startTime;
 
-function logKey(e) {
-  console.log(e.shiftKey);
-
-  g_TailAngle = (90+4*(Math.cos(5*g_seconds)));
-}
 
 function tick(){
 
   g_seconds  =performance.now()/1000-g_startTime;
 
-  updateAnimationAngles(5);
+  updateAnimationAngles();
 
   renderScene();
 
@@ -397,27 +459,10 @@ function convertCoordinatesEventToGL(ev){
   return ([x, y]);
 }
 
-function updateAnimationAngles(speed){
-  if (g_HeadAnimation){
-    //console.log(Math.sin(g_seconds));
-    g_HeadAngle = (110+4*Math.sin(speed*g_seconds));
+function updateAnimationAngles(){
+  if (g_AnimationOn){
+    g_lightPos[0]=Math.cos(g_seconds)*4+2;
   }
-
-  if (g_NeckAnimation){
-    g_NeckAngle = (-120+4*Math.sin(speed*g_seconds));
-  }
-
-  if (g_Leg1Animation){
-    g_leg1Angle = (90+10*Math.sin(speed*g_seconds));
-    g_leg1_1Angle = (90+10*Math.cos(speed*g_seconds+3));
-  }
-
-  if (g_Leg2Animation){
-    g_leg2Angle = (10*(Math.cos(speed*g_seconds)));
-    g_leg2_1Angle = (10*(Math.sin(speed*g_seconds+3)));
-  }
-
-  g_TailAngle = (45+4*(Math.cos(speed*g_seconds)));
 }
 
 function keydown(ev){
@@ -484,22 +529,6 @@ var g_map = [
   [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
 ];
 
-function drawWall(){
-  for (x = 0; x < 64; x+=1){
-    for (y= 0; y < 64; y+=1){
-      if (x<1 || x==63 || y==0 || y==63){
-        var body = new Cube();
-        body.textureNum = 2;
-        body.color = [0.8, 1.0, 1.0, 1.0];
-        body.matrix.translate(0, -.75, 0);
-        body.matrix.scale(.4,.4,.4);
-        body.matrix.translate(x-30, 0, y-30);
-        body.renderfast();
-      }
-    }
-  }
-}
-
 function drawMap(){
   for (x = 0; x < 24; x+=1){
     for (y= 0; y < 16; y+=1){
@@ -507,6 +536,7 @@ function drawMap(){
         for (j= 0; j < g_map[x][y]; j+=1){
           var body = new Cube();
           body.textureNum = 2;
+          if (g_normalOn) body.textureNum = 3;
           body.color = [1.0, 1.0, 1.0, 1.0];
           body.matrix.translate(0, -0.25, 0);
           body.matrix.translate(x-10, -.75-(-1)*j, y-4);
@@ -544,26 +574,9 @@ function initEventHandlers(canvas, currentAngle) {
       // Limit x-axis rotation angle to -90 to 90 degrees
       currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
       currentAngle[1] = currentAngle[1] + dx;
-      //g_globalAngle = -x;
-      //g_globalAngle_Y = -y;
-      /*if (lastX - x <0){
-        g_camera.panX(-x/3000);
-      }else{
-        g_camera.panX(x/3000);
-      }
-
-
-      if (lastY - y<0){
-        g_camera.panY(y/3000);
-      }else{
-        g_camera.panY(-y/3000);
-      }*/
 
       g_camera.panX((lastX - x)/5);
       g_camera.panY((lastY - y));
-      //console.log(x);
-      //g_camera.at.elements[1] = -x;
-      //g_camera.at.elements[2] = -y;
     }
     lastX = x, lastY = y;
     
@@ -575,8 +588,6 @@ function renderScene(){
   //pass u_ModelMatrix attribute
   var startTime = performance.now();
 
-  /*var projMat = new Matrix4();
-  projMat.setPerspective(60, canvas.width/canvas.height, .1, 100);//perspective*/
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_camera.projectionMatrix.elements);
 
   var viewMat = new Matrix4();
@@ -597,13 +608,13 @@ function renderScene(){
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   //Map_Wall
-  drawWall();
   drawMap();
 
   //floor
   var floor = new Cube();
   floor.color = [1.0,0.0,0.0,1.0];
   floor.textureNum = 1;
+  if (g_normalOn) floor.textureNum = 3;
   floor.matrix.translate(0, -.75, 0.0);
   floor.matrix.scale(32, 0, 32);
   floor.matrix.translate(-.5, 0, -.5);
@@ -612,147 +623,35 @@ function renderScene(){
   //sky
   var sky = new Cube();
   sky.color = [1.0,0.0,0.0,1.0];
-  sky.matrix.scale(50, 50, 50);
+  sky.textureNum = 0;
+  if (g_normalOn) sky.textureNum = 3;
+  sky.matrix.scale(-50, -50, -50);
   sky.matrix.translate(-.5, -.5, -.5);
+  sky.normalMatrix.setInverseOf(sky.matrix).transpose();
   sky.renderfast();
-
-  //tail
-  var test = new Cylinder();
-  test.color = [1.0,0.0,1.0,1.0];
-  test.matrix.translate(0.0 , -0.1, 0.4);
-  test.matrix.rotate(g_TailAngle, 1, 0, 0);
-  test.matrix.scale(1, 1, 0.5);
+  
+  //test sphere
+  var test = new Sphere();
+  test.color = [0.0,0.0,0.0,1.0];
+  test.textureNum = -3;
+  if (g_normalOn) test.textureNum = 3;
+  test.matrix.scale(1, 1, 1);
+  test.matrix.translate(5, 1, -6);
   test.render();
 
-  //draw red body
-  var body = new Cube();
-  body.textureNum = -1;
-  body.color = [1.0,0.0,0.0,1.0];
-  body.matrix.translate(-0.3, -0.3, -0.5);
-  body.matrix.rotate(0, 1, 0, 0);
-  body.matrix.scale(0.6, .3, 1);
-  body.renderfast();
+  gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+  gl.uniform3f(u_cameraPos, g_camera.eye[0], g_camera.eye[1], g_camera.eye[2]);
+  gl.uniform1i(u_lightOn, g_lightOn);
 
-  //draw yellow neck
-  var yellowNeck = new Cube();
-  yellowNeck.textureNum = -1;
-  yellowNeck.color = [1, 1, 0, 1];
-  yellowNeck.matrix.translate(-0.16, 0, -0.2);
-  yellowNeck.matrix.rotate(g_NeckAngle, 1, 0, 0);
-  var BlackBase = new Matrix4(yellowNeck.matrix);
-  yellowNeck.matrix.scale(0.3, .3, .5);
-  yellowNeck.renderfast();
-
-  //draw White head
-  var whiteHead = new Cube();
-  whiteHead.textureNum = -1;
-  whiteHead.matrix = BlackBase;
-  whiteHead.color = [1, 1, 1, 1];
-  whiteHead.matrix.translate(-0.05, 0, 0.5);
-  whiteHead.matrix.rotate(g_HeadAngle, 1, 0, 0);
-  whiteHead.matrix.scale(0.4, 0.3, 0.5);
-  whiteHead.matrix.rotate(-180, 1, 0, 0);
-  whiteHead.renderfast();
-
-  //draw nose
-  var nose = new Cube();
-  nose.textureNum = -1;
-  nose.matrix = BlackBase;
-  nose.color = [1, 0, 0, 1];
-  nose.matrix.translate(0.31, 0, 1);
-  nose.matrix.rotate(g_HeadAngle, 1, 0, 0);
-  nose.matrix.scale(0.4, 0.3, 0.5);
-  nose.matrix.rotate(-180, 1, 0, 0);
-  nose.renderfast();
-
-  //legs
-
-  //leg1_________________________________________________
-  //draw leg1 right-front
-  var leg1 = new Cube();
-  leg1.textureNum = -1;
-  leg1.color = [0.0,1.0,1.0,1.0];
-  leg1.matrix.translate(-0.27 , -0.2, -0.48);
-  leg1.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
-  var leg1Base = new Matrix4(leg1.matrix);
-  leg1.matrix.scale(0.11, .2, 0.3);
-  leg1.renderfast();
-
-  //draw leg1_b right-front
-  var leg1_b = new Cube();
-  leg1_b.textureNum = -1;
-  leg1_b.matrix = leg1Base;
-  leg1_b.color = [0.0,1.0,0.0,1.0];
-  leg1_b.matrix.translate(0.01 , 0.05, 0.1);
-  leg1_b.matrix.rotate(g_leg2_1Angle, 1, 0, 0);
-  leg1_b.matrix.scale(0.09, .1, 0.5);
-  leg1_b.renderfast();
-
-  //leg2________________________________________________
-  //draw leg2 left-front
-  var leg2 = new Cube();
-  leg2.textureNum = -1;
-  leg2.color = [0.0,1.0,1.0,1.0];
-  leg2.matrix.translate(0.16 , -0.2, -0.48);
-  leg2.matrix.rotate(g_leg1Angle, 1, 0, 0);
-  var leg2Base = new Matrix4(leg2.matrix);
-  leg2.matrix.scale(0.11, .2, 0.3);
-  leg2.renderfast();
-
-  //draw leg2_b right-front
-  var leg2_b = new Cube();
-  leg2_b.textureNum = -1;
-  leg2_b.matrix = leg2Base;
-  leg2_b.color = [0.0,1.0,0.0,1.0];
-  leg2_b.matrix.translate(0.01 , 0.05, 0.1);
-  leg2_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
-  leg2_b.matrix.scale(0.09, .1, 0.5);
-  leg2_b.renderfast();
-
-  //leg3______________________________________________
-  //draw leg3 left-back
-  var leg3 = new Cube();
-  leg3.textureNum = -1;
-  leg3.color = [0.0,1.0,1.0,1.0];
-  leg3.matrix.translate(-0.27 , -0.2, 0.29);
-  leg3.matrix.rotate(g_leg1_1Angle, 1, 0, 0);
-  var leg3Base = new Matrix4(leg3.matrix);
-  leg3.matrix.scale(0.11, .2, 0.3);
-  leg3.renderfast();
-
-  //draw leg3_b right-front
-  var leg3_b = new Cube();
-  leg3_b.textureNum = -1;
-  leg3_b.matrix = leg3Base;
-  leg3_b.color = [0.0,1.0,0.0,1.0];
-  leg3_b.matrix.translate(0.01 , 0.05, 0.1);
-  leg3_b.matrix.rotate(g_leg2_1Angle, 1, 0, 0);
-  leg3_b.matrix.scale(0.09, .1, 0.5);
-  leg3_b.renderfast();
-
-  //leg4______________________________________________
-  //draw leg4 left-back
-  var leg4 = new Cube();
-  leg4.textureNum = -1;
-  leg4.color = [0.0,1.0,1.0,1.0];
-  leg4.matrix.translate(0.16 , -0.2, 0.29);
-  leg4.matrix.rotate(g_leg1Angle, 1, 0, 0);
-  var leg4Base = new Matrix4(leg4.matrix);
-  leg4.matrix.scale(0.11, .2, 0.3);
-  leg4.renderfast();
-
-  //draw leg4_b right-front
-  var leg4_b = new Cube();
-  leg4_b.textureNum = -1;
-  leg4_b.matrix = leg4Base;
-  leg4_b.color = [0.0,1.0,0.0,1.0];
-  leg4_b.matrix.translate(0.01 , 0.05, 0.1);
-  leg4_b.matrix.rotate(g_leg2Angle, 1, 0, 0);
-  leg4_b.matrix.scale(0.09, .1, 0.5);
-  leg4_b.renderfast();
-
+  //light
+  var light = new Cube();
+  light.color = [2,2,0,1];
+  light.textureNum = -2;
+  light.matrix.translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+  light.matrix.scale(.1,.1,.1);
+  light.matrix.translate(3,2,-50);
+  light.renderfast();
   
-
   var duration = performance.now() - startTime;
   sendTextToHTML( " ms: " + Math.floor(duration) + " fps " + Math.floor(1000/duration), "texts");
 
