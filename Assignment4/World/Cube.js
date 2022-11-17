@@ -19,6 +19,8 @@ class Cube{
 
       //pass matrix to u_ModelMatrix attribute
       gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+
+      gl.uniformMatrix4fv(u_NormalMatrix, false, this.normalMatrix.elements);
       
       //Front of Cube
       drawTriangle3DUV([0,0,0,  1,1,0,  1,0,0], [0,0, 1,1, 1,0]);
@@ -76,6 +78,7 @@ class Cube{
 
       //pass matrix to u_ModelMatrix attribute
       gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+      gl.uniformMatrix4fv(u_NormalMatrix, false, this.normalMatrix.elements);
       
       var allverts = [];
       var allverts1 = [];
