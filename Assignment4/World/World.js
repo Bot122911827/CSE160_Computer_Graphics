@@ -273,7 +273,7 @@ function addActionsForHtmlUI(){
   //slider
   document.getElementById('lightSliderX').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[0] = -this.value/100; renderScene();}});
   document.getElementById('lightSliderY').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[1] = this.value/100; renderScene();}});
-  document.getElementById('lightSliderZ').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[2] = this.value/100; renderScene();};});
+  document.getElementById('lightSliderZ').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[2] = -this.value/100; renderScene();};});
 
   //slider RGB
   document.getElementById('lightR').addEventListener('mouseup', function() {g_lightColor[0] = this.value/100; renderScene();});
