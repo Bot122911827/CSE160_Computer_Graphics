@@ -35,6 +35,11 @@ var FSHADER_SOURCE =
   'uniform vec3 u_lightColor;\n' + 
   'varying vec4 v_VertPos;\n' + 
   'uniform bool u_lightOn;\n' + 
+  'uniform bool u_spotLightOn;\n' +
+  'uniform vec3 u_spotLightPos;\n' +
+  'uniform vec3 u_spotLightDir;\n' +
+  'uniform float u_spotLightCos;\n' + 
+  'uniform float u_spotLightExp;\n' +    
   'void main() {\n' +
   '   if (u_whichTexture == -2){\n' + 
   '     gl_FragColor = u_FragColor;\n' + 
@@ -62,11 +67,19 @@ var FSHADER_SOURCE =
   '   vec3 diffuse = vec3(gl_FragColor) * nDotL * 0.7;\n' + 
   '   vec3 ambient = vec3(gl_FragColor) * 0.2;\n' + 
   '   vec3 specular = vec3(gl_FragColor) * S;\n' + 
+  '   float spotFactor = 0.0;\n' + 
+  '   L = normalize(u_spotLightPos - vec3(v_VertPos));\n' + 
+  '   vec3 D = -normalize(u_spotLightDir);\n' + 
+  '   float spotCosine = dot(D, L);\n' + 
+  '   if (spotCosine >= u_spotLightCos){\n' +
+  '     spotFactor = pow(spotCosine, u_spotLightExp);\n' +  
+  '   };\n' + 
+  '   vec3 spotLight = vec3(gl_FragColor) * spotFactor;\n' +   
   '   if (u_lightOn){\n' + 
-  '     if (u_whichTexture == 0){\n' + 
+  '     if (!u_spotLightOn){\n' + 
   '       gl_FragColor = vec4(u_lightColor * specular + u_lightColor * diffuse + u_lightColor * ambient, 1.0);\n' + 
   '     } else {\n' + 
-  '       gl_FragColor = vec4(u_lightColor * diffuse + u_lightColor * ambient, 1.0);\n' + 
+  '       gl_FragColor = vec4(ambient + spotLight * u_lightColor, 1.0);\n' + 
   '     }\n' + 
   '   }\n' +
   '}\n';
@@ -92,6 +105,11 @@ let u_lightPos;
 let u_cameraPos;
 let u_lightOn;
 let u_lightColor;
+let u_spotLightOn;
+let u_spotLightPos;
+let u_spotLightDir;
+let u_spotLightCos;
+let u_spotLightExp;
 
 
 function setupWebGL(){
@@ -162,6 +180,37 @@ function connectVariablesToGLSL(){
   u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
   if (!u_cameraPos) {
     console.log('Failed to get the storage location of u_cameraPos');
+    return;
+  }
+
+  //spotlight
+  u_spotLightOn = gl.getUniformLocation(gl.program, 'u_spotLightOn');
+  if (!u_spotLightOn) {
+    console.log('Failed to get the storage location of u_spotLightOn');
+    return;
+  }
+
+  u_spotLightPos = gl.getUniformLocation(gl.program, 'u_spotLightPos');
+  if (!u_spotLightPos) {
+    console.log('Failed to get the storage location of u_spotLightPos');
+    return;
+  }
+
+  u_spotLightDir = gl.getUniformLocation(gl.program, 'u_spotLightDir');
+  if (!u_spotLightDir) {
+    console.log('Failed to get the storage location of u_spotLightDir');
+    return;
+  }
+
+  u_spotLightCos = gl.getUniformLocation(gl.program, 'u_spotLightCos');
+  if (!u_spotLightCos) {
+    console.log('Failed to get the storage location of u_spotLightCos');
+    return;
+  }
+
+  u_spotLightExp = gl.getUniformLocation(gl.program, 'u_spotLightExp');
+  if (!u_spotLightExp) {
+    console.log('Failed to get the storage location of u_spotLightExp');
     return;
   }
 
@@ -256,6 +305,13 @@ let g_lightPos = [6,1,-10];
 let g_lightOn=true;
 let g_lightColor=[1, 1, 1];
 
+//spotlight
+let g_spotLightOn=false;
+let g_spotLightPos = [6,1,-10];
+let g_spotLightDir = [0, -1, 0];
+let g_spotLightCos = 0.8;
+let g_spotLightExp = 8;
+
 function addActionsForHtmlUI(){
 
   //normals
@@ -269,6 +325,10 @@ function addActionsForHtmlUI(){
   //light On/Off
   document.getElementById("LightOn").onclick = function() {g_lightOn=true};
   document.getElementById("LightOff").onclick = function() {g_lightOn=false};
+
+  //Spotlight On/Off
+  document.getElementById("SpotLightOn").onclick = function() {g_spotLightOn=true};
+  document.getElementById("SpotLightOff").onclick = function() {g_spotLightOn=false};
 
   //slider
   document.getElementById('lightSliderX').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[0] = -this.value/100; renderScene();}});
@@ -620,6 +680,12 @@ function renderScene(){
   //clear canvas
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.uniform1i(u_spotLightOn, g_spotLightOn);
+  gl.uniform3f(u_spotLightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+  gl.uniform3f(u_spotLightDir, 0.0, -1.0, 0.0);
+  gl.uniform1f(u_spotLightCos, 0.8);
+  gl.uniform1f(u_spotLightExp, 8);
 
   //Map_Wall
   drawMap();
