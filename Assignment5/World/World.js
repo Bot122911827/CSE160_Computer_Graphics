@@ -92,11 +92,10 @@ function main() {
 
   //fog
   {
-    const near = 0.1;
-    const far = 80;
-    const color = 'white';
-    scene.fog = new THREE.Fog(color, near, far);
-    scene.background = new THREE.Color(color);
+
+    const color = 0xFFFFFF;
+    const density = 0.01;
+    scene.fog = new THREE.FogExp2(color, density);
   }
 
   {
@@ -122,7 +121,7 @@ function main() {
 
   function createWall(x, y, r, w){
     const loader = new THREE.TextureLoader();
-    const brickMaterial = new THREE.MeshBasicMaterial({
+    const brickMaterial = new THREE.MeshStandardMaterial({
       map: loader.load('../resources/brick.jpg'),
     });
     const height = 8;  // ui: height
@@ -142,14 +141,14 @@ function main() {
     const height = 8;  // ui: height
     const radialSegments = 120;  // ui: radialSegments
     const cylinder1Geo = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments);
-    //const cylinder1Mat = new THREE.MeshPhongMaterial({color: '#adaeaf'});
+    const cylinder1Mat = new THREE.MeshPhongMaterial({color: '#adaeaf'});
     const loader = new THREE.TextureLoader();
-    const brickMaterial = new THREE.MeshBasicMaterial({
+    const brickMaterial = new THREE.MeshStandardMaterial({
       map: loader.load('../resources/brick.jpg'),
     });
 
     const loader2 = new THREE.TextureLoader();
-    const roofMaterial = new THREE.MeshBasicMaterial({
+    const roofMaterial = new THREE.MeshStandardMaterial({
       map: loader2.load('../resources/roof.jpg'),
     });
     const mesh = new THREE.Mesh(cylinder1Geo, brickMaterial);
@@ -192,11 +191,11 @@ function main() {
   function createCastleStraight(x, y, z){
 
     const loader = new THREE.TextureLoader();
-    const brickMaterial = new THREE.MeshBasicMaterial({
+    const brickMaterial = new THREE.MeshStandardMaterial({
       map: loader.load('../resources/brick.jpg'),
     });
     const loader2 = new THREE.TextureLoader();
-    const roofMaterial = new THREE.MeshBasicMaterial({
+    const roofMaterial = new THREE.MeshStandardMaterial({
       map: loader2.load('../resources/roof.jpg'),
     });
     //1
@@ -246,11 +245,11 @@ function main() {
   function createCastleStraightSmall(x, y, z){
 
     const loader = new THREE.TextureLoader();
-    const brickMaterial = new THREE.MeshBasicMaterial({
+    const brickMaterial = new THREE.MeshStandardMaterial({
       map: loader.load('../resources/brick.jpg'),
     });
     const loader2 = new THREE.TextureLoader();
-    const roofMaterial = new THREE.MeshBasicMaterial({
+    const roofMaterial = new THREE.MeshStandardMaterial({
       map: loader2.load('../resources/roof.jpg'),
     });
     //1
@@ -395,14 +394,14 @@ function main() {
 
   //point light
   {
-    const color = '#65a3d2';
+    const color = '#bb65d2';
     const intensity = 0.5;
     const pointlight = new THREE.PointLight(color, intensity);
     pointlight.position.set(-8.4, 10, 0);
     scene.add(pointlight);
 
     const helper = new THREE.PointLightHelper(pointlight);
-    scene.add(helper);
+    //scene.add(helper);
 
     function updateLight() {
       helper.update();
@@ -439,7 +438,7 @@ function main() {
   }
 
   //add .obj
-  /*{
+  {
     const mtlLoader = new MTLLoader();
     mtlLoader.load('https://threejs.org/manual/examples/resources/models/windmill/windmill.mtl', (mtl) => {
       mtl.preload();
@@ -447,18 +446,15 @@ function main() {
       objLoader.setMaterials(mtl);
       objLoader.load('https://threejs.org/manual/examples/resources/models/windmill/windmill.obj', (root) => {
         scene.add(root);
+      const box = new THREE.Box3().setFromObject(root);
+      
+      root.position.set(13,0,-10);
+      root.rotateY(-90);
+
       });
     });
-  }*/
+  }
 
-  /*{
-    const objLoader = new OBJLoader();
-    objLoader.load('../resources/Castle.obj', (root) => {
-      scene.add(root);
-    });
-
-    //objLoader.scale(10, 10, 10);
-  }*/
 
   //billboards
   const bodyRadiusTop = .4;
@@ -610,18 +606,15 @@ function main() {
     if (explosions.length>0){
       explosions.forEach((e) => e.update());
     }
+
+    setTimeout(() => {
+      console.log("Delayed for 1 second.");
+    }, 5000);
     renderer.render(scene, camera);
   }
   
 
-  for (let i = 0; i < 10; i+=1){
-    let e = new Explosion;
-    setTimeout(function() {console.log('1')}, 2000 * i);
-    e.makeParticles();
-    explosions.push(e); 
-    console.log("i: ", i);
 
-  }
 
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -633,8 +626,8 @@ function main() {
     }
     return needResize;
   }
-  
 
+  let e = new Explosion;
   function render(t) {
 
     if (resizeRendererToDisplaySize(renderer)) {
@@ -643,7 +636,11 @@ function main() {
       camera.updateProjectionMatrix();
     }
 
+
     t += 0.01;  // convert time to seconds
+
+    e.makeParticles();
+    explosions.push(e); 
 
     spheres.forEach((sphere) => {
 
