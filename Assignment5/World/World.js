@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
-import {OBJLoader} from '../lib/three.js-master/examples/jsm/loaders/OBJLoader.js';
-import {MTLLoader} from '../lib/three.js-master//examples/jsm/loaders/MTLLoader.js';
+import {OBJLoader} from '../lib/OBJLoader.js';
+import {MTLLoader} from '../lib/MTLLoader.js';
 
 function main() {
   const canvas = document.querySelector('#c');
@@ -607,9 +607,6 @@ function main() {
       explosions.forEach((e) => e.update());
     }
 
-    setTimeout(() => {
-      console.log("Delayed for 1 second.");
-    }, 5000);
     renderer.render(scene, camera);
   }
   
@@ -628,6 +625,7 @@ function main() {
   }
 
   let e = new Explosion;
+  let index = 0;
   function render(t) {
 
     if (resizeRendererToDisplaySize(renderer)) {
@@ -638,10 +636,13 @@ function main() {
 
 
     t += 0.01;  // convert time to seconds
-
-    e.makeParticles();
-    explosions.push(e); 
-
+    
+    index +=1;
+    if (index % 130 === 0){
+      e.makeParticles();
+      explosions.push(e); 
+    }
+    
     spheres.forEach((sphere) => {
 
       sphere.position.x = 10*Math.cos(t/1000) - 7;
